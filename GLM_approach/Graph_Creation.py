@@ -24,17 +24,17 @@ import matplotlib.pyplot as plt
 zmaps_RETRO = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.nii.gz')
 zmaps_RETRO.sort()
-zmaps_RETRO = [zmaps_RETRO[0]]
+
 #Load FWE-thresholded z-maps for unique variance of AROMA
 zmaps_AROMA = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.nii.gz')
 zmaps_AROMA.sort()
-zmaps_AROMA = [zmaps_AROMA[0]]
+
 #Load FWE-thresholded z-maps for shared variance of AROMA and RETROICOR
 zmaps_shared = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.nii.gz')
 zmaps_shared.sort()
-zmaps_shared = [zmaps_shared[0]]
+
 
 if len(zmaps_RETRO) != len(zmaps_AROMA) or len(zmaps_RETRO) != len(zmaps_shared):
     print('Not all processed images are present in the dataset!')
@@ -79,7 +79,7 @@ plt.close()
 
 #Overall plotting of z-maps for RETRO and AROMA shared variance
 fig, axes = plt.subplots(nrows=13, ncols=2, figsize=[15,25]) 
-for cidx, zmap in enumerate(zmaps_shared: 
+for cidx, zmap in enumerate(zmaps_shared): 
     plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subs[cidx], \
                               axes=axes[int(cidx / 2), int(cidx % 2)],annotate=False, \
                               output_file = '/project/3013068.03/RETROICOR/z_map_collection_shared.png', \

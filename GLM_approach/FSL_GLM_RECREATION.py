@@ -51,8 +51,7 @@ for subs in part_list:
     
     #GLM settings
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, smoothing_fwhm=6, \
-                                                  drift_model=None, hrf_model=None, mask_img= mni_mask, \
-                                                 memory='/home/cogaff/markre/memory_dump/', verbose=1)
+                                                  drift_model=None, hrf_model=None, mask_img= mni_mask, verbose=1)
     
     #Loading respective functional run as NII-img-like nibabel object
     func_data = sub.get_func_data(session=ses_nr,run=2,task='RS', MNI=True)
