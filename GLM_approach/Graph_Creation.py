@@ -60,28 +60,31 @@ for subject_zmap in zmaps_shared:
     
     
 #Overall plotting of z-maps for RETRO unique variance
-fig, axes = plt.subplots(nrows=13, ncols=2, figsize=[15,25]) 
+fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15,25]) 
 for cidx, zmap in enumerate(zmaps_RETRO): 
-    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subs[cidx], \
-                              axes=axes[int(cidx / 2), int(cidx % 2)],annotate=False, \
+    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-')+7]
+    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subject_id, \
+                              axes=axes[int(cidx / 3), int(cidx % 3)],annotate=False, \
                               output_file = '/project/3013068.03/RETROICOR/z_map_collection_RETRO.png', \
                               plot_abs=False) 
 plt.close()
 
 #Overall plotting of z-maps for AROMA unique variance
-fig, axes = plt.subplots(nrows=13, ncols=2, figsize=[15,25]) 
-for cidx, zmap in enumerate(zmaps_AROMA): 
-    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subs[cidx], \
-                              axes=axes[int(cidx / 2), int(cidx % 2)],annotate=False, \
-                              output_file = '/project/3013068.03/RETROICOR/z_map_collection_RETRO.png', \
+fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15,25]) 
+for cidx, zmap in enumerate(zmaps_AROMA):
+    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-')+7]
+    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subject_id, \
+                              axes=axes[int(cidx / 3), int(cidx % 3)],annotate=False, \
+                              output_file = '/project/3013068.03/RETROICOR/z_map_collection_AROMA.png', \
                               plot_abs=False) 
 plt.close()
 
 #Overall plotting of z-maps for RETRO and AROMA shared variance
-fig, axes = plt.subplots(nrows=13, ncols=2, figsize=[15,25]) 
+fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15,25]) 
 for cidx, zmap in enumerate(zmaps_shared): 
-    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subs[cidx], \
-                              axes=axes[int(cidx / 2), int(cidx % 2)],annotate=False, \
+    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-')+7]
+    plotting.plot_glass_brain(zmap, colorbar=True, threshold=None, title=subject_id, \
+                              axes=axes[int(cidx / 3), int(cidx % 3)],annotate=False, \
                               output_file = '/project/3013068.03/RETROICOR/z_map_collection_shared.png', \
                               plot_abs=False) 
 plt.close()
