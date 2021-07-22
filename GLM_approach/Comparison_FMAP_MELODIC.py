@@ -1,0 +1,112 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jul  8 11:43:04 2021
+
+Script to binarise activation maps to assess spatial overlap with MELODIC components
+Steps:
+    
+    Binarise F-Map to have spatial overlay [DONE]
+    Compute Melodic Spatial Maps
+    Binarise Maps
+    Assess Overlap
+
+@author: markre
+"""
+import glob
+import numpy as np
+import nibabel as nib
+import pandas as pd
+from nilearn import glm
+from Subject_Class import Subject
+from nilearn import glm
+from nilearn import plotting
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+
+participant_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/*/RETRO_vs_AROMA.feat/thresh_zfstat2.nii.gz')
+participant_list.sort()
+
+for participant_long in participant_list:
+	#Load respective subject
+	participant = participant_long[-49:-42]
+	subject = Subject(participant)
+	
+	#Fix scan parameters
+	t_r = 2.02
+	n_scans = 240
+	frame_times = np.arange(n_scans)*t_r
+	mni_mask = '/project/3013068.03/RETROICOR/MNI152lin_T1_2mm_brain_mask.nii.gz'
+	#Binarise and load thresholded z-map of RETROICOR explained variance beyond AROMA
+	zmap = nib.load('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA.feat/thresh_zfstat2.nii.gz'.format(participant))
+	zmap_data = zmap.get_fdata()
+	zmap_data_binarised = zmap_data
+	zmap_data_binarised[zmap_data_binarised > 0] = 1
+	
+	#Had to do this, no idea why. This part is cursed and I would like to know which devil made this happen.
+	zmap_data_binarised_inverted = nib.load('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA.feat/thresh_zfstat2.nii.gz'.format(participant)).get_fdata()
+	zmap_data_binarised_inverted[zmap_data_binarised_inverted>0] = 1
+	zmap_data_binarised_inverted[zmap_data_binarised_inverted == 1] = 2
+	zmap_data_binarised_inverted[zmap_data_binarised_inverted == 0] = 1
+	zmap_data_binarised_inverted[zmap_data_binarised_inverted == 2] = 0
+	
+	zmap_nii = nib.Nifti2Image(zmap_data_binarised, zmap.affine, zmap.header)
+	nib.save(zmap_nii, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA.feat/binarised_thres_zfstat.nii.gz'.format(participant))
+	
+	# Load respective functional Data
+	func_data = subject.get_func_data(session=2,run=2,task='RS', MNI=True)
+	
+	#Create GLM with 6mm smoothing and no convolution
+	melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, high_pass=0, smoothing_fwhm=6, drift_model=None, hrf_model=None, mask_img= mni_mask)
+	
+	#Load melodic mixing matrix
+	melodic_mixing_matrix = pd.read_csv(glob.glob('/project/3013068.03/derivate/fmriprep/{0}/ses-mri03/func/{0}_ses-mri03_task-15isomb3TR2020TE28RS*run-2_echo-1_desc-MELODIC_mixing.tsv'.format(participant))[0], header=None, sep='\t')
+	
+	sub_sum = []
+	for x in range(0,np.shape(melodic_mixing_matrix)[1]):
+		#Bring together Model information and use nilearn function to create design matrix. Note: Modulation in this case is the expression of the regressor.
+
+		#Vector of AROMA classified noise ICs
+		sub_noise_components = pd.read_csv(glob.glob('/project/3013068.03/derivate/fmriprep/{0}/ses-mri03/func/{0}_ses-mri03_task-15isomb3TR2020TE28RS*_dir-COL_run-2_echo-1_AROMAnoiseICs.csv'.format(participant))[0],header=None)
+		
+		# GLM Components and readable model structure for nilearn.glm
+		melodic_list = list(melodic_mixing_matrix[x])
+		constant = [1]*240
+		events = pd.DataFrame({'1': melodic_list, 'constant': constant}, index=frame_times)	
+
+		#Compute GLM
+		glm_output = melodic_GLM.fit(func_data, design_matrices=events)
+		
+		#Create contrast '1' for simplte t-contrast of the one model regressor. Output here is nii-img like nibabel object.
+		contrast = glm_output.compute_contrast(contrast_def='1', stat_type='t', output_type='z_score')
+		nib.save(contrast, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/Melodic_Matching/z_map_{0}_{1}.nii.gz'.format(participant, x))
+		
+		#Create Z-map image of easier visualisation
+		plotting.plot_glass_brain(contrast, colorbar=True, threshold=norm.isf(0.001), title='Nilearn Z map of Melodic Component {0} (unc p<0.001)'.format(str(x+1)),plot_abs=False, display_mode='ortho')
+		plt.savefig('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/Melodic_Matching/z_map_{0}_{1}.png'.format(participant, x))
+		
+		#Masking of data for goodness of fit calculation
+		masked_difference = np.ma.masked_array(contrast.get_fdata(), mask=zmap_data_binarised)
+		masked_difference_sum = masked_difference.sum()
+		masked_difference_mean = masked_difference.mean()
+		
+		masked_difference_inverted = np.ma.masked_array(contrast.get_fdata(), mask=zmap_data_binarised_inverted)
+		masked_difference_inverted_sum = masked_difference_inverted.sum()
+		masked_difference_inverted_mean = masked_difference_inverted.mean()
+		
+		goodness_of_fit = masked_difference_inverted_mean - masked_difference_mean
+		unique, counts = np.unique(zmap_data_binarised, return_counts=True)
+		
+		if x+1 in list(sub_noise_components.T[0]):
+			noise = 'Noise'
+		else:
+			noise = 'Signal'
+			 
+		sub_sum.append([masked_difference_inverted_sum, masked_difference_inverted_mean, masked_difference_sum, masked_difference_mean, goodness_of_fit, counts[1], noise])  
+	
+
+	Subject_Data = pd.DataFrame(sub_sum, columns=['Inside Mask Sum', 'Inside Mask Mean', 'Outside Mask Sum', 'Outside Mask Mean', 'Goodness of Fit', 'Mask Voxel Count', 'Component Classification'])
+	Subject_Data.to_csv('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/Melodic_Matching/{0}_summary.txt'.format(participant))
+		
+
