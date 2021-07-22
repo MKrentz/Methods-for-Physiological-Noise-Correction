@@ -24,42 +24,37 @@ import matplotlib.pyplot as plt
 zmaps_RETRO = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.nii.gz')
 zmaps_RETRO.sort()
-
+zmaps_RETRO = [zmaps_RETRO[0]]
 #Load FWE-thresholded z-maps for unique variance of AROMA
 zmaps_AROMA = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.nii.gz')
 zmaps_AROMA.sort()
-
+zmaps_AROMA = [zmaps_AROMA[0]]
 #Load FWE-thresholded z-maps for shared variance of AROMA and RETROICOR
 zmaps_shared = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*'\
                         '/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.nii.gz')
 zmaps_shared.sort()
+zmaps_shared = [zmaps_shared[0]]
 
 if len(zmaps_RETRO) != len(zmaps_AROMA) or len(zmaps_RETRO) != len(zmaps_shared):
     print('Not all processed images are present in the dataset!')
     
-for subject_zmap in zmap_RETRO:
-    subject_id = subject[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
+for subject_zmap in zmaps_RETRO:
+    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
     plotting.plot_glass_brain(subject_zmap, colorbar=True, threshold=None, title=subject_id + ': Unique Variance of RETROICOR',\
-                              output_file = '/project/3013068.03/RETROICOR/{0}'\
-                              '/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.png'.format(subject_id), \
-                              plot_abs=False)
+                              output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.png'.format(subject_id), plot_abs=False)
     plt.close()
 
-for subject_zmap in zmap_AROMA:
-    subject_id = subject[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
+for subject_zmap in zmaps_AROMA:
+    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
     plotting.plot_glass_brain(subject_zmap, colorbar=True, threshold=None, title=subject_id + ': Unique Variance of RETROICOR',\
-                              output_file = '/project/3013068.03/RETROICOR/{0}'\
-                              '/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.png'.format(subject_id), \
-                              plot_abs=False)
+                              output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.png'.format(subject_id), plot_abs=False)
     plt.close()
 
-for subject_zmap in zmap_shared:
-    subject_id = subject[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
+for subject_zmap in zmaps_shared:
+    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-')+7]
     plotting.plot_glass_brain(subject_zmap, colorbar=True, threshold=None, title=subject_id + ': Unique Variance of RETROICOR',\
-                              output_file = '/project/3013068.03/RETROICOR/{0}'\
-                              '/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.png'.format(subject_id), \
-                              plot_abs=False)
+                              output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.png'.format(subject_id), plot_abs=False)
     plt.close()
     
     
