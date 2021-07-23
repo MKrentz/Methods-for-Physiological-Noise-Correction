@@ -23,7 +23,6 @@ from scipy.stats import norm
 
 summary_files = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*/Melodic_Matching_corrected/*summary.txt')
 summary_files.sort()
-summary_files = summary_files[:2]
 summary_list = []
 
 # Indicating subject having the 'stress' condition during their FIRST functional session
