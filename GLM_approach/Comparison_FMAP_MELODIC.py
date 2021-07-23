@@ -62,7 +62,10 @@ for subject in participant_list:
     
     zmap_nii = nib.Nifti2Image(zmap_data_binarised, zmap.affine, zmap.header)
     nib.save(zmap_nii, subject[:-7] + '_binarised.nii.gz')
-
+    
+    if 1.0 not in zmap_data_binarised:
+        continue
+    
     # Load respective functional Data
     func_data = subject_obj.get_func_data(session=ses_nr,run=2, task='RS', MNI=True)
 
