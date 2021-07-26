@@ -28,13 +28,14 @@ participant_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisatio
                              '/Unique_Variance_RETRO_fwe_corrected.nii.gz')
 participant_list.sort()
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
-
+    
 for subject in participant_list:
     
     #Load respective subject
     subject_id = subject[subject.find('sub-'): subject.find('sub-')+7]
     subject_obj = Subject(subject_id)
-    
+    if subject_id not in stress_list:
+        continue
     #Fix scan parameters
     t_r = 2.02
     n_scans = 240
@@ -42,9 +43,9 @@ for subject in participant_list:
     mni_mask = '/project/3013068.03/RETROICOR/MNI152lin_T1_2mm_brain_mask.nii.gz'
 
     # Account for balancing in stress/control session order
-    if subject in stress_list:
+    if subject_id in stress_list:
         ses_nr = 2
-    elif subject not in stress_list:
+    elif subject_id not in stress_list:
         ses_nr = 1
     
     #Binarise and load thresholded z-map of RETROICOR explained variance beyond AROMA
