@@ -39,7 +39,7 @@ for subject in participant_list:
     
     #Loop over potential misclassifications
     zmaps_melodic_added = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                                     'Melodic_Matching_corrected/potential_misclassfications/AddComp*fwe_corrected.nii.gz'.format(subject_id))
+                                     'Melodic_Matching_corrected/potential_misclassifications/AddComp*fwe_corrected.nii.gz'.format(subject_id))
     zmaps_melodic_added.sort()
     dice_list = []
     component_list = []
