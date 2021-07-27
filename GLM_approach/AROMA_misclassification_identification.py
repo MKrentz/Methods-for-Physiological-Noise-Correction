@@ -135,20 +135,20 @@ for summary_counter, summary in enumerate(summary_files):
 
             #Save resulting z-maps (unthresholded)
             nib.save(F_RETRO_unique_added_comp_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                     'Melodic_Matching_corrected/potential_misclassfications/{1}.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
+                     'Melodic_Matching_corrected/potential_misclassifications/{1}.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
 
             #Thresholded maps FWE
             thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output, alpha=.05, height_control='bonferroni')
 
             #Save resulting z-maps FWE-thresholded 0.05
             nib.save(thresholded_RETRO_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                 'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
+                 'Melodic_Matching_corrected/potential_misclassifications/{1}_fwe_corrected.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
 
             #Plot thresholded results
             plotting.plot_glass_brain(thresholded_RETRO_FWE, colorbar=True, threshold=None, \
                                       title=subject_id + 'AddComp: ' + str(potential_misclass_id[component_id]+1),\
                                       output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                                      'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.png'\
+                                      'Melodic_Matching_corrected/potential_misclassifications/{1}_fwe_corrected.png'\
                                       .format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)), \
                                       plot_abs=False)
             plt.close()
