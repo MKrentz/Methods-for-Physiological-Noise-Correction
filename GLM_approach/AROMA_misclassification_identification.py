@@ -23,6 +23,7 @@ from scipy.stats import norm
 
 summary_files = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*/Melodic_Matching_corrected/*summary.txt')
 summary_files.sort()
+summary_files=summary_files[0:3]
 summary_list = []
 
 # Indicating subject having the 'stress' condition during their FIRST functional session
@@ -32,11 +33,7 @@ stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013',
 for summary_counter, summary in enumerate(summary_files):
     fit_matrix = pd.read_csv(summary, index_col=0)
     fit_matrix.sort_values('Goodness of Fit', ascending=False, kind='stable', inplace=True)
-    summary_list.append(fit_matrix)
 
-
-for summary_counter, summary in enumerate(summary_files):
-    
     #Invoke Subject_Class to allow access to all necessary data
     subject_id = summary[summary.find('sub-'): summary.find('sub-')+7]
     subject_obj = Subject(subject_id)
@@ -56,8 +53,9 @@ for summary_counter, summary in enumerate(summary_files):
     potential_misclass_id = []
     potential_misclass_matrix = []
     #Identification of potential misclassification
-    for row in summary_list[0].iterrows():
+    for row in fit_matrix.iterrows():
         if row[1]['Goodness of Fit'] > 0.75 and row[1]['Component Classification'] == 'Signal':
+            print(row[0])
             potential_misclass_id.append(row[0])
             potential_misclass_matrix.append(melodic_mixing_matrix[row[0]])
     
@@ -104,53 +102,53 @@ for summary_counter, summary in enumerate(summary_files):
     #Column name constant
     column_constant = ['Constant']
     
-    
-    for component_id, component in enumerate(potential_misclass_matrix):
-        
-        #Regressor list
-        regressors = [np.array(component)] + \
-        [np.loadtxt(x) for x in cardiac_phase[:6]] + \
-        [np.loadtxt(x) for x in respiratory_phase[:8]] + \
-        [np.loadtxt(x) for x in multiplication_phase] + \
-        [np.loadtxt(x) for x in aroma_noise] + \
-        [constant]
+    if potential_misclass_matrix != []:
+        for component_id, component in enumerate(potential_misclass_matrix):
 
-        #Joint column names
-        column_names = ['AddComp_' + str(potential_misclass_id[component_id]+1)] + columns_RETRO + columns_AROMA + column_constant
+            #Regressor list
+            regressors = [np.array(component)] + \
+            [np.loadtxt(x) for x in cardiac_phase[:6]] + \
+            [np.loadtxt(x) for x in respiratory_phase[:8]] + \
+            [np.loadtxt(x) for x in multiplication_phase] + \
+            [np.loadtxt(x) for x in aroma_noise] + \
+            [constant]
 
-        #Create design matrix as used by nilearn(v0.8).
-        design = pd.DataFrame(regressors)
-        design = design.T
-        design.index =frame_times
-        design.columns = column_names
-        
-        #compute SEPERATE glm using the specified design matrix (yeah yeah I know..)
-        glm_output = melodic_GLM.fit(func_data, design_matrices=design)
-    
-        #Create contrast matrix for F-tests
-        contrast_length_retro = 18
-        contrast_matrix = np.eye(design.shape[1])
-        F_RETRO_unique_added_comp = contrast_matrix[1:contrast_length_retro+1] 
+            #Joint column names
+            column_names = ['AddComp_' + str(potential_misclass_id[component_id]+1)] + columns_RETRO + columns_AROMA + column_constant
+            print('AddComp_' + str(potential_misclass_id[component_id]+1))
+            #Create design matrix as used by nilearn(v0.8).
+            design = pd.DataFrame(regressors)
+            design = design.T
+            design.index =frame_times
+            design.columns = column_names
 
-        #Compute contrasts (for the shared contrast the choice of GLM is redundant)
-        F_RETRO_unique_added_comp_output = glm_output.compute_contrast([F_RETRO_unique_added_comp], stat_type='F')
-        
-        #Save resulting z-maps (unthresholded)
-        nib.save(F_RETRO_unique_added_comp_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                 'Melodic_Matching_corrected/potential_misclassfications/{1}.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
-        
-        #Thresholded maps FWE
-        thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output, alpha=.05, height_control='bonferroni')
-        
-        #Save resulting z-maps FWE-thresholded 0.05
-        nib.save(thresholded_RETRO_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
+            #compute SEPERATE glm using the specified design matrix (yeah yeah I know..)
+            glm_output = melodic_GLM.fit(func_data, design_matrices=design)
 
-        #Plot thresholded results
-        plotting.plot_glass_brain(thresholded_RETRO_FWE, colorbar=True, threshold=None, \
-                                  title=subject_id + 'AddComp: ' + str(potential_misclass_id[component_id]+1),\
-                                  output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                                  'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.png'\
-                                  .format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)), \
-                                  plot_abs=False)
-        plt.close()
+            #Create contrast matrix for F-tests
+            contrast_length_retro = 18
+            contrast_matrix = np.eye(design.shape[1])
+            F_RETRO_unique_added_comp = contrast_matrix[1:contrast_length_retro+1] 
+
+            #Compute contrasts (for the shared contrast the choice of GLM is redundant)
+            F_RETRO_unique_added_comp_output = glm_output.compute_contrast([F_RETRO_unique_added_comp], stat_type='F')
+
+            #Save resulting z-maps (unthresholded)
+            nib.save(F_RETRO_unique_added_comp_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
+                     'Melodic_Matching_corrected/potential_misclassfications/{1}.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
+
+            #Thresholded maps FWE
+            thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output, alpha=.05, height_control='bonferroni')
+
+            #Save resulting z-maps FWE-thresholded 0.05
+            nib.save(thresholded_RETRO_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
+                 'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.nii.gz'.format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)))
+
+            #Plot thresholded results
+            plotting.plot_glass_brain(thresholded_RETRO_FWE, colorbar=True, threshold=None, \
+                                      title=subject_id + 'AddComp: ' + str(potential_misclass_id[component_id]+1),\
+                                      output_file = '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
+                                      'Melodic_Matching_corrected/potential_misclassfications/{1}_fwe_corrected.png'\
+                                      .format(subject_id,'AddComp_' + str(potential_misclass_id[component_id]+1)), \
+                                      plot_abs=False)
+            plt.close()
