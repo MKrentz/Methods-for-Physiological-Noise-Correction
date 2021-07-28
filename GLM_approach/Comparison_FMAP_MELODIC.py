@@ -22,25 +22,27 @@ from nilearn import glm
 from nilearn import plotting
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+from nilearn.datasets import load_mni152_brain_mask
 
 
+#List of all pre-thresholded z-maps (FWE/p<.05) displaying unique RETROICOR variance with AROMA in the model.
 participant_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*/RETRO_vs_AROMA_revised'\
                              '/Unique_Variance_RETRO_fwe_corrected.nii.gz')
 participant_list.sort()
+
+#Subjects having the stress sessions as their first functional session (ses-mri02)
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
-    
+
 for subject in participant_list:
     
     #Load respective subject
     subject_id = subject[subject.find('sub-'): subject.find('sub-')+7]
     subject_obj = Subject(subject_id)
-    if subject_id not in stress_list:
-        continue
+
     #Fix scan parameters
     t_r = 2.02
     n_scans = 240
     frame_times = np.arange(n_scans)*t_r
-    mni_mask = '/project/3013068.03/RETROICOR/MNI152lin_T1_2mm_brain_mask.nii.gz'
 
     # Account for balancing in stress/control session order
     if subject_id in stress_list:
@@ -61,15 +63,18 @@ for subject in participant_list:
     zmap_data_binarised_inverted[zmap_data_binarised_inverted == 0] = 1
     zmap_data_binarised_inverted[zmap_data_binarised_inverted == 2] = 0
     
+    #Save binarised z-map
     zmap_nii = nib.Nifti2Image(zmap_data_binarised, zmap.affine, zmap.header)
     nib.save(zmap_nii, subject[:-7] + '_binarised.nii.gz')
     
+    #Account for subjects without supra-threshold voxels in the initial zmap
     if 1.0 not in zmap_data_binarised:
         continue
     
     # Load respective functional Data
     func_data = subject_obj.get_func_data(session=ses_nr,run=2, task='RS', MNI=True)
-
+    mni_mask = load_mni152_brain_mask()
+    
     #Create GLM with 6mm smoothing and no convolution
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, high_pass=0, smoothing_fwhm=6,\
                                                   drift_model=None, hrf_model=None, mask_img= mni_mask, verbose=1)
@@ -119,6 +124,7 @@ for subject in participant_list:
         goodness_of_fit = masked_difference_inverted_mean - masked_difference_mean
         unique, counts = np.unique(zmap_data_binarised, return_counts=True)
 
+        #Add Classification as Noise or Signal based on AROMA classification
         if x+1 in list(sub_noise_components.T[0]):
             noise = 'Noise'
         else:
