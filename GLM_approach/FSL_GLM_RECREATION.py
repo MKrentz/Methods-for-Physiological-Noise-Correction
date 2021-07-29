@@ -21,6 +21,7 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from nilearn.glm import threshold_stats_img
+from nilearn.datasets import load_mni152_brain_mask
 
 part_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*')
 part_list.sort() 
@@ -47,7 +48,7 @@ for subs in part_list:
     frame_times = np.arange(n_scans)*t_r
     
     # Standard MNI mask used for masking
-    mni_mask = '/project/3013068.03/RETROICOR/MNI152lin_T1_2mm_brain_mask.nii.gz'
+    mni_mask = load_mni152_brain_mask()
     
     #GLM settings
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, smoothing_fwhm=6, \
