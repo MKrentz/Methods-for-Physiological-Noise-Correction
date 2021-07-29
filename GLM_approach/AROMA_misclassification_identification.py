@@ -21,6 +21,7 @@ from nilearn.glm import threshold_stats_img
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
+#Pools all available summary files
 summary_files = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*/Melodic_Matching_corrected/*summary.txt')
 summary_files.sort()
 summary_list = []
@@ -51,6 +52,7 @@ for summary_counter, summary in enumerate(summary_files):
                                         header=None, sep='\t')
     potential_misclass_id = []
     potential_misclass_matrix = []
+
     #Identification of potential misclassification
     for row in fit_matrix.iterrows():
         if row[1]['Goodness of Fit'] > 0.75 and row[1]['Component Classification'] == 'Signal':
@@ -100,7 +102,8 @@ for summary_counter, summary in enumerate(summary_files):
     
     #Column name constant
     column_constant = ['Constant']
-    
+
+    #Account for subject without potential misclassification
     if potential_misclass_matrix != []:
         for component_id, component in enumerate(potential_misclass_matrix):
 
