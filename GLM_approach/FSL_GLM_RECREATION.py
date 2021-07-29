@@ -21,6 +21,7 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from nilearn.glm import threshold_stats_img
+from nilearn.datasets import load_mni152_brain_mask
 
 part_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*')
 part_list.sort() 
@@ -47,11 +48,11 @@ for subs in part_list:
     frame_times = np.arange(n_scans)*t_r
     
     # Standard MNI mask used for masking
-    mni_mask = '/project/3013068.03/RETROICOR/MNI152lin_T1_2mm_brain_mask.nii.gz'
+    mni_mask = load_mni152_brain_mask()
     
     #GLM settings
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, smoothing_fwhm=6, \
-                                                  drift_model=None, hrf_model=None, mask_img= mni_mask)
+                                                  drift_model=None, hrf_model=None, mask_img= mni_mask, verbose=1)
     
     #Loading respective functional run as NII-img-like nibabel object
     func_data = sub.get_func_data(session=ses_nr,run=2,task='RS', MNI=True)
@@ -71,8 +72,7 @@ for subs in part_list:
     respiratory_reg = [np.loadtxt(x) for x in respiratory_phase[:8]]
     multiplication_reg = [np.loadtxt(x) for x in multiplication_phase]
     aroma_noise_reg = [np.loadtxt(x) for x in aroma_noise]
-    regressors_RETRO = cardiac_reg + respiratory_reg + multiplication_reg + aroma_noise_reg + [constant]
-    regressors_AROMA = aroma_noise_reg + cardiac_reg + respiratory_reg + multiplication_reg + [constant]
+    regressors = cardiac_reg + respiratory_reg + multiplication_reg + aroma_noise_reg + [constant]
     
     #Column names for 3C4R1M RETROICOR
     columns_RETRO = ['Car_sin_01', 'Car_cos_01', 'Car_sin_02', 'Car_cos_02', 'Car_sin_03', 'Car_cos_03', \
@@ -84,47 +84,40 @@ for subs in part_list:
     
     #Column name constant
     column_constant = ['Constant']
-    
+  
     #Joint column names
-    column_names_RETRO = columns_RETRO + columns_AROMA + column_constant
-    column_names_AROMA = columns_AROMA + columns_RETRO + column_constant
+    column_names = columns_RETRO + columns_AROMA + column_constant
     
     #Create design matrix as used by nilearn(v0.8) for RETRO unique variance. This is done because I could not figure out
     #how to create a non-singular design matrix for the F-contrast
-    design_RETRO = pd.DataFrame(regressors_RETRO)
-    design_RETRO = design_RETRO.T
-    design_RETRO.index =frame_times
-    design_RETRO.columns = column_names_RETRO
+    design = pd.DataFrame(regressors)
+    design = design.T
+    design.index =frame_times
+    design.columns = column_names
     
-    #Create design matrix as used by nilearn(v0.8) for AROMA unique variance.
-    design_AROMA = pd.DataFrame(regressors_AROMA)
-    design_AROMA = design_AROMA.T
-    design_AROMA.index =frame_times
-    design_AROMA.columns = column_names_AROMA
 
     #compute SEPERATE glm using the specified design matrix (yeah yeah I know..)
-    glm_output_RETRO = melodic_GLM.fit(func_data, design_matrices=design_RETRO)
-    glm_output_AROMA = melodic_GLM.fit(func_data, design_matrices=design_AROMA)
+    glm_output = melodic_GLM.fit(func_data, design_matrices=design)
     
     #Create contrast matrix for F-tests
     contrast_length_retro = len(cardiac_reg + respiratory_reg + multiplication_reg)
     contrast_length_aroma = len(aroma_noise_reg)
-    contrast_matrix = np.eye(design_RETRO.shape[1])
+    contrast_matrix = np.eye(design.shape[1])
     F_contrast_RETRO_unique = contrast_matrix[:contrast_length_retro] 
-    F_contrast_AROMA_unique = contrast_matrix[:contrast_length_aroma]
+    F_contrast_AROMA_unique = contrast_matrix[contrast_length_retro:-1]
     F_contrast_shared = contrast_matrix[:contrast_length_retro+contrast_length_aroma]
     
     #Compute contrasts (for the shared contrast the choice of GLM is redundant)
-    F_contrast_RETRO_output = glm_output_RETRO.compute_contrast([F_contrast_RETRO_unique], stat_type='F')
-    F_contrast_AROMA_output = glm_output_AROMA.compute_contrast([F_contrast_AROMA_unique], stat_type='F')
-    F_contrast_shared = glm_output_RETRO.compute_contrast([F_contrast_shared], stat_type='F')
+    F_contrast_RETRO_output = glm_output.compute_contrast([F_contrast_RETRO_unique], stat_type='F')
+    F_contrast_AROMA_output = glm_output.compute_contrast([F_contrast_AROMA_unique], stat_type='F')
+    F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type='F')
     
     #Save resulting z-maps (unthresholded)
     nib.save(F_contrast_RETRO_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
              'RETRO_vs_AROMA_revised/Unique_Variance_RETRO.nii.gz'.format(subject))
     nib.save(F_contrast_AROMA_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
              'RETRO_vs_AROMA_revised/Unique_Variance_AROMA.nii.gz'.format(subject))
-    nib.save(F_contrast_AROMA_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
+    nib.save(F_contrast_shared, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
              'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO.nii.gz'.format(subject))
                                                            
     #Threshold maps FDR
