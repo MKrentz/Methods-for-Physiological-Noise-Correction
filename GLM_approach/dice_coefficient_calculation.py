@@ -59,7 +59,7 @@ for subject in participant_list:
             dice_list[zmap_counter] = np.round(dice,3)
             component_list[zmap_counter] = component_number[0]
             #Save created binarised map
-            nib.save(melodic_added_nii, zmap[:-7] + '_binarised_dice_{0}.nii.gz'.format(str(dice_rounded)))
+            nib.save(melodic_added_nii, zmap[:-7] + '_binarised_dice_{0}.nii.gz'.format(str(np.round(dice,3))))
 
 
             dice_frame = pd.DataFrame({'Dice Coefficient': dice_list, 'Melodic_Component': component_list, 'Subject': [subject_id]*len(dice_list)})
@@ -71,3 +71,17 @@ for subject in participant_list:
 overall_dice = pd.concat(index_list)
 overall_dice.sort_values('Dice Coefficient',inplace=True)
 overall_dice.to_csv('/project/3013068.03/RETROICOR/Example_Visualisation/misclassification_dice_overview.txt', index=False)
+
+component_list = []
+title_list = []
+for index, lines in x.iterrows():
+    component_list.append(nib.load('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.\
+                               format(lines['Subject'], lines['Melodic_Component']-1)))
+    title_list.append(lines['Subject'] + ': ' + str(lines['Melodic_Component']) + ' / ' + str(np.round(lines['Dice Coefficient'],3)))
+
+fig, axes = plt.subplots(nrows=14, ncols=2, figsize=[20,40])
+for component_counter, component in enumerate(component_list):
+    plotting.plot_glass_brain(component, colorbar=True, threshold=None, title=title_list[component_counter], \
+                              axes=axes[int(component_counter / 2), int(component_counter % 2)],annotate=False, \
+                              output_file = '/project/3013068.03/RETROICOR/overall_dice_misclassifications.png', \
+                              plot_abs=False)
