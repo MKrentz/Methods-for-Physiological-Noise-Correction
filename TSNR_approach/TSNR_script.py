@@ -22,7 +22,9 @@ MNI_mask = load_mni152_brain_mask()
 
 # Load MNI mask to used masked data matrices
 mni_mat = MNI_mask.get_fdata()
-mni_mat[mni_mat == 1], mni_mat[mni_mat == 0] = 0, 1
+mni_mat[mni_mat == 1] = 2
+mni_mat[mni_mat == 0] = 1
+mni_mat[mni_mat == 2] = 0
 
 # Load all available participants
 part_list = glob.glob('/project/3013068.03/RETROICOR/TSNR/sub-*')
@@ -57,14 +59,14 @@ for subject_long in part_list:
     func_data_native = sub_obj.get_func_data(session=ses_nr,run=2,task='RS', MNI=False)
     func_data_native = image.smooth_img(func_data_native, fwhm=6)
     sub_confounds = sub_obj.get_confounds(session=ses_nr, run=2, task='RS')
-    sub_brainmask = sub_obj.get_brainmask(session=ses_nr, run=2, MNI=False)
+    sub_brainmask = sub_obj.get_brainmask(session=ses_nr, run=2, MNI=False).get_fdata()
     sub_phys = sub_obj.get_physio(session=ses_nr, run=2, task='RS')
     func_data_list = [func_data_mni, func_data_native]
 
     for func_data_counter, func_data in enumerate(func_data_list):
 
         if func_data_counter == 0:
-            mask = MNI_mask
+            mask = mni_mat
             identifier = 'MNI'
         
         elif func_data_counter == 1:
