@@ -136,7 +136,7 @@ for subject_long in part_list:
 
         # Difference Combination to Normal
         difference_aggrAROMARETRO_normal = masked_TSNR_aggrAROMA_RETRO - masked_TSNR_normal
-        nib.save(nib.Nifti2Image(difference_aggrAROMARETRO_normal, affine=func_data.affine, header=func_data.header), basepath + '{0}/TSNR_difference_aggrAROMARETRO_normal{1}.nii.gz'.format(sub_id, identifier))
+        nib.save(nib.Nifti2Image(difference_aggrAROMARETRO_normal, affine=func_data.affine, header=func_data.header), basepath + '{0}/TSNR_difference_aggrAROMARETRO_normal_{1}.nii.gz'.format(sub_id, identifier))
 
         # Difference RETRO to Normal
         difference_RETRO_normal =  masked_TSNR_RETRO - masked_TSNR_normal
