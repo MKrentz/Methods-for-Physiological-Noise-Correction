@@ -60,6 +60,9 @@ for subject_long in part_list:
     func_data_native = image.smooth_img(func_data_native, fwhm=6)
     sub_confounds = sub_obj.get_confounds(session=ses_nr, run=2, task='RS')
     sub_brainmask = sub_obj.get_brainmask(session=ses_nr, run=2, MNI=False).get_fdata()
+    sub_brainmask[sub_brainmask == 1] = 2
+    sub_brainmask[sub_brainmask == 0] = 1
+    sub_brainmask[sub_brainmask == 2] = 0
     sub_phys = sub_obj.get_physio(session=ses_nr, run=2, task='RS')
     func_data_list = [func_data_mni, func_data_native]
 
