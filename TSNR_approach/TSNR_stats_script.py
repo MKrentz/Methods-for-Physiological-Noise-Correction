@@ -12,9 +12,10 @@ from scipy import stats
 from Subject_Class import Subject
 from nilearn.datasets import load_mni152_brain_mask
 from nilearn.image import resample_to_img
-import nilearn
+import pandas as pd
 
-basepath = '/project/3013068.03/RETROICOR/TSNR/'
+
+BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
 
 MNI_mask = load_mni152_brain_mask()
 
@@ -31,8 +32,9 @@ brainstem_mat[brainstem_mat == 1] = 2
 brainstem_mat[brainstem_mat == 0] = 1
 brainstem_mat[brainstem_mat == 2] = 0
 
-part_list = glob.glob(basepath + 'sub-*')
+part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
+part_list = part_list[:2]
 
 # Planned comparisons
 var_names_MNI = ['TSNR_noclean_MNI', 'TSNR_RETRO_MNI', 'TSNR_aggrAROMA_MNI', 'TSNR_difference_aggrAROMA_normal_MNI',
@@ -49,6 +51,7 @@ var_names_native = ['TSNR_noclean_native', 'TSNR_RETRO_native', 'TSNR_aggrAROMA_
 
 # Create object dictionary
 objects_MNI = dict.fromkeys(var_names_MNI)
+objects_brainstem = dict.fromkeys(var_names_MNI)
 objects_native = dict.fromkeys(var_names_native)
 objects_LC = dict.fromkeys(var_names_native)
 objects_gm = dict.fromkeys(var_names_native)
@@ -65,91 +68,115 @@ for subject_path in part_list:
     sub_func = sub_obj.get_func_data(run=2, session=ses_nr)
 
     # Individual LC Mask
-    LC_mask = sub_obj.get_LC()
-    LC_mask_native = resample_to_img(LC_mask, sub_func, interpolation='nearest')
-    LC_mask_mat = LC_mask_native.get_fdata()
-    LC_mask_mat[LC_mask_mat == 1] = 2
-    LC_mask_mat[LC_mask_mat == 0] = 1
-    LC_mask_mat[LC_mask_mat == 2] = 0
+    try:
+        LC_mask = sub_obj.get_LC()
+        LC_mask_native = resample_to_img(LC_mask, sub_func, interpolation='nearest')
+        LC_mask_mat = LC_mask_native.get_fdata()
+        LC_mask_mat[LC_mask_mat == 1] = 2
+        LC_mask_mat[LC_mask_mat == 0] = 1
+        LC_mask_mat[LC_mask_mat == 2] = 0
+
+    except:
+        LC_mask = None
 
     gm_mask = nib.load('/project/3013068.03/derivate/fmriprep/{0}/anat/{0}_desc-aparcaseg_dseg.nii.gz'.format(sub_id))
     gm_mask_mat = gm_mask.get_fdata()
-    gm_mask_mat[gm_mask_mat < 1000] = 0
-    gm_mask_mat[gm_mask_mat >= 1000] = 1
+    gm_mask_mat[gm_mask_mat < 1000], gm_mask_mat[gm_mask_mat >= 1000] = 1, 0
     gm_mask_native = nib.Nifti2Image(gm_mask_mat, gm_mask.affine, gm_mask.header)
     gm_mask_native = resample_to_img(gm_mask_native, sub_func, interpolation='nearest')
     gm_mask_mat = gm_mask_native.get_fdata()
-    gm_mask_mat[gm_mask_mat == 1] = 2
-    gm_mask_mat[gm_mask_mat == 0] = 1
-    gm_mask_mat[gm_mask_mat == 2] = 0
 
     if sub_id == part_list[0][-7:]:
         for keys, values in objects_MNI.items():
-            objects_MNI[keys] = nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :,
+            objects_MNI[keys] = nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :,
                             np.newaxis]
 
+        for keys, values in objects_brainstem.items():
+            objects_brainstem[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
+
         for keys, values in objects_native.items():
-            objects_native[keys] = [nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata()]
+            objects_native[keys] = [nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()]
 
         for keys, values in objects_LC.items():
-            objects_LC[keys] = [np.ma.array(nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat).filled(0)]
+            objects_LC[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
 
         for keys, values in objects_gm.items():
-            objects_gm[keys] = [np.ma.array(nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat).filled(0)]
+            objects_gm[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
 
     else:
         for keys, values in objects_MNI.items():
             objects_MNI[keys] = np.concatenate(
-                (values, nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :, np.newaxis]),
+                (values, nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :, np.newaxis]),
                 axis=3)
+        for keys, values in objects_brainstem.items():
+            objects_brainstem[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
 
         for keys, values in objects_native.items():
-            objects_native[keys] = values + [nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata()]
-
-        for keys, values in objects_LC.items():
-            objects_LC[keys]= values + [np.ma.array(nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
+            objects_native[keys] = values + [nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()]
 
         for keys, values in objects_gm.items():
-            objects_gm[keys] = values + [np.ma.array(nib.load(glob.glob(basepath + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
+            objects_gm[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
+
+        if LC_mask != None:
+            for keys, values in objects_LC.items():
+                objects_LC[keys]= values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
 
 
 # Mean Matrices for MNI template
 mean_MNI_matrix = objects_MNI
 mean_MNI_value = dict.fromkeys(var_names_MNI)
-mean_brainstem_value = dict.fromkeys(var_names_MNI)
 for keys, values in mean_MNI_matrix.items():
-    mean_MNI_matrix[keys] = np.mean(values, axis=3)
-    mean_MNI_value[keys] = np.ma.array(mean_MNI_matrix[keys], mask=mni_mat).mean()
-    mean_brainstem_value[keys] = np.ma.array(mean_MNI_matrix[keys], mask=brainstem_mat).mean()
+    mean_MNI_value[keys] = np.mean(values, axis=(0,1,2))
+mean_MNI_value_df = pd.DataFrame(mean_MNI_value)
+#mean_MNI_value_df.to_csv(BASEPATH + 'MNI_means.txt')
+
+# Mean matrices for brainstem template
+mean_brainstem_matrix = objects_brainstem
+mean_brainstem_value = dict.fromkeys(var_names_MNI)
+for keys, values in mean_brainstem_matrix.items():
+    mean_brainstem_value[keys] = [np.ma.mean(x) for x in values]
+mean_brainstem_value_df = pd.DataFrame(mean_brainstem_value)
+#mean_brainstem_value_df.to_csv(BASEPATH + 'brainstem_means.txt')
 
 # Mean Matrices for Grey Matter
-mean_gm_matrix = objects_native
+mean_gm_matrix = objects_gm
 mean_gm_value = dict.fromkeys(var_names_native)
 for keys, values in mean_gm_matrix.items():
-    mean_gm_value = [np.ma.mean(x) for x in values]
+    mean_gm_value[keys] = [np.ma.mean(x) for x in values]
+mean_gm_value_df = pd.DataFrame(mean_gm_value)
+#mean_gm_value_df.to_csv(BASEPATH + 'graymatter_means.txt')
 
-#Mean Matrices for LC
+# Mean Matrices for LC
 mean_LC_matrix = objects_LC
 mean_LC_value = dict.fromkeys(var_names_native)
 for keys, values in mean_LC_matrix.items():
     mean_LC_value[keys] = [np.ma.mean(x) for x in values]
-
+mean_LC_value_df = pd.DataFrame(mean_LC_value)
+#mean_LC_value_df.to_csv(BASEPATH + 'LC_means.txt')
 
 # Stats
 # Stats for MNI
 # TSNR non-cleaned vs TSNR-RETRO
-stats.ttest_rel(mean_LC_value['TSNR_noclean_native'], mean_LC_value['TSNR_RETRO_native'])
-"""
-stats.ttest_rel(Mean_Vector_TSNR_noclean_MNI, Mean_Vector_aggrAROMA_MNI)
-stats.ttest_1samp(Mean_Vector_aggrAROMARETRO_RETRO_MNI, population=0)
-stats.describe(Mean_Vector_aggrAROMARETRO_RETRO_MNI)
-stats.ttest_1samp(Mean_Vector_aggrAROMARETRO_aggrAROMA_MNI, population=0)
-stats.describe(Mean_Vector_aggrAROMARETRO_aggrAROMA_MNI)
-# Stats for brainstem
-stats.ttest_rel(Mean_Vector_TSNR_noclean_brainstem, Mean_Vector_RETRO_brainstem)
-stats.ttest_rel(Mean_Vector_TSNR_noclean_brainstem, Mean_Vector_aggrAROMA_brainstem)
-stats.ttest_1samp(Mean_Vector_aggrAROMARETRO_RETRO_brainstem, population=0)
-stats.describe(Mean_Vector_aggrAROMARETRO_RETRO_brainstem)
-stats.ttest_1samp(Mean_Vector_aggrAROMARETRO_aggrAROMA_brainstem, population=0)
-stats.describe(Mean_Vector_aggrAROMARETRO_aggrAROMA_brainstem)
-"""
+
+stats_list = [mean_MNI_value_df, mean_brainstem_value_df, mean_gm_value_df, mean_LC_value_df]
+space_name= ['MNI', 'Brainstem', 'GrayMatter', 'LC']
+dim_dic = dict.fromkeys(space_name)
+results_dic = {'RETROICOR Cleaned': dim_dic, 'AROMA Cleaned': dim_dic, 'Unique RETROICOR Effect': dim_dic, 'Unique AROMA Effect': dim_dic}
+results_df = pd.DataFrame(results_dic)
+
+counter = 0
+for index, row in results_df.iterrows():
+    if index == 'MNI' or index == 'Brainstem':
+        results_df['RETROICOR Cleaned'][index] = stats.ttest_rel(stats_list[counter]['TSNR_noclean_MNI'], stats_list[counter]['TSNR_RETRO_MNI'])
+        results_df['AROMA Cleaned'][index] = stats.ttest_rel(stats_list[counter]['TSNR_noclean_MNI'], stats_list[counter]['TSNR_aggrAROMA_MNI'])
+        results_df['Unique RETROICOR Effect'][index] = (stats.ttest_1samp(stats_list[counter]['TSNR_difference_aggrAROMARETRO_aggrAROMA_MNI'], popmean = 0))
+        results_df['Unique AROMA Effect'][index] = (stats.ttest_1samp(stats_list[counter]['TSNR_difference_aggrAROMARETRO_RETRO_MNI'], popmean = 0))
+        counter += 1
+
+    elif index == 'GrayMatter' or index == 'LC':
+        results_df['RETROICOR Cleaned'][index] = stats.ttest_rel(stats_list[counter]['TSNR_noclean_native'], stats_list[counter]['TSNR_RETRO_native'])
+        results_df['AROMA Cleaned'][index] = stats.ttest_rel(stats_list[counter]['TSNR_noclean_native'], stats_list[counter]['TSNR_aggrAROMA_native'])
+        results_df['Unique RETROICOR Effect'][index] = (stats.ttest_1samp(stats_list[counter]['TSNR_difference_aggrAROMARETRO_aggrAROMA_native'], popmean = 0))
+        results_df['Unique AROMA Effect'][index] = (stats.ttest_1samp(stats_list[counter]['TSNR_difference_aggrAROMARETRO_RETRO_native'], popmean = 0))
+        counter += 1
+results_df.to_csv(BASEPATH + 'stats_results.txt', sep = ' ')
