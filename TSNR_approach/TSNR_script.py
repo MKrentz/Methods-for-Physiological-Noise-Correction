@@ -33,7 +33,7 @@ from nilearn.datasets import load_mni152_brain_mask
 
 
 MNI_MASK = load_mni152_brain_mask()
-BASEPATH = '/project/3013068.03/RETROICOR/tsnr/'
+BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
 
 # Load MNI mask to used masked data matrices and switch 0 to 1 and 1 to 0
 mni_mat = MNI_MASK.get_fdata()
@@ -196,8 +196,7 @@ for subject_long in part_list:
             for output_counter, output in enumerate(output_list):
                 output_list[output_counter] = np.concatenate((output, mask_list[output_counter][:,:,:,np.newaxis]), axis=3)
 
-for output in output_list:
-    nib.save(nib.Nifti2Image(output, affine = func_data.affine, header = func_data.header), BASEPATH + 'Overall_{0}).nii.gz'.format(object_name(output, globals())))
+nib.save(nib.Nifti2Image(np.mean(output, axis = 3), affine = func_data.affine, header = func_data.header), BASEPATH + 'Overall_{0}).nii.gz'.format(object_name(output, globals())))
 
 
 
