@@ -40,54 +40,53 @@ for subject_long in part_list:
     # Subject space_identifier
     sub_id = subject_long[-7:]
 
-    if sub_id != 'sub-017':
-        # Account for balancing in stress/control session order
-        ses_nr = 3 if sub_id in stress_list else 2
+    # Account for balancing in stress/control session order
+    ses_nr = 3 if sub_id in stress_list else 2
 
-        # Account for different naming conventions in HR data
-        try:
-            hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/sub_{2}_0{1}*run_4*hera.mat'.format(sub_id, str(ses_nr), sub_id[-3:]))[0])
-        except:
-            hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/{0}*ses-0{1}*RS*run-2*hera.mat'.format(sub_id, str(ses_nr)))[0])
+    # Account for different naming conventions in HR data
+    try:
+        hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/sub_{2}_0{1}*run_4*hera.mat'.format(sub_id, str(ses_nr), sub_id[-3:]))[0])
+    except:
+        hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/{0}*ses-0{1}*RS*run-2*hera.mat'.format(sub_id, str(ses_nr)))[0])
 
-        hera_data = hera['matfile']
+    hera_data = hera['matfile']
 
-        rejections = []
-        overlap = 'No'
+    rejections = []
+    overlap = 'No'
 
-        #Loop over all rejection windows to calculate seconds rejected
-        for counter, object in enumerate(hera_data[0][0][7][0]):
+    #Loop over all rejection windows to calculate seconds rejected
+    for counter, object in enumerate(hera_data[0][0][7][0]):
 
-            # Identifier whether a rejection window overlap exists
-            overlap_object = False
+        # Identifier whether a rejection window overlap exists
+        overlap_object = False
 
-            # This loop accounts for rejection overlaps
-            for timing_pairs in hera_data[0][0][7][0]:
-                if timing_pairs[0][0] < object[0][1] and timing_pairs[0][1] > object[0][1]:
-                    overlap = 'Yes'
-                    overlap_object = True
-                    break
+        # This loop accounts for rejection overlaps
+        for timing_pairs in hera_data[0][0][7][0]:
+            if timing_pairs[0][0] < object[0][1] and timing_pairs[0][1] > object[0][1]:
+                overlap = 'Yes'
+                overlap_object = True
+                break
 
-            # Depending on overlap the values are adjusted
-            if overlap_object == True:
-                overlap_calc = timing_pairs[0][0] - object[0][0]
-                if overlap_calc < 0:
-                    continue
-                rejections.append(overlap_calc)
+        # Depending on overlap the values are adjusted
+        if overlap_object == True:
+            overlap_calc = timing_pairs[0][0] - object[0][0]
+            if overlap_calc < 0:
+                continue
+            rejections.append(overlap_calc)
 
-            elif overlap_object == False:
-                overlap_calc = object[0][1] - object[0][0]
-                if overlap_calc < 0:
-                    continue
-                rejections.append(overlap_calc)
+        elif overlap_object == False:
+            overlap_calc = object[0][1] - object[0][0]
+            if overlap_calc < 0:
+                continue
+            rejections.append(overlap_calc)
 
-        # Taking the last peak timestamp to substract from and calculate percentage
-        last_peak = float(hera_data[0][0][4][0][-1:])
-        rejection_duration = np.sum(rejections)
-        percentage_rejection = rejection_duration / last_peak * 100
+    # Taking the last peak timestamp to substract from and calculate percentage
+    last_peak = float(hera_data[0][0][4][0][-1:])
+    rejection_duration = np.sum(rejections)
+    percentage_rejection = rejection_duration / last_peak * 100
 
-        #Create DataFrame and save
-        rejection_df['HR Rejection Percentage'][sub_id] = percentage_rejection
-        rejection_df['Session Number'][sub_id] = ses_nr
-        rejection_df['Overlap'][sub_id] = overlap
-        rejection_df.to_csv(BASEPATH + '/HR_rejections.txt')
+    #Create DataFrame and save
+    rejection_df['HR Rejection Percentage'][sub_id] = percentage_rejection
+    rejection_df['Session Number'][sub_id] = ses_nr
+    rejection_df['Overlap'][sub_id] = overlap
+    rejection_df.to_csv(BASEPATH + '/HR_rejections.txt')
