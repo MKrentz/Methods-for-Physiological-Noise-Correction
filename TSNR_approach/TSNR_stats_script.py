@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 13 12:52:40 2021
-
+This still contains a problem with the lack of Subject-008s LC mask. Currently it leads to mean lists of different lengths.
 @author: markre
 """
+
 import numpy as np
 import nibabel as nib
 import glob
@@ -13,7 +14,6 @@ from Subject_Class import Subject
 from nilearn.datasets import load_mni152_brain_mask
 from nilearn.image import resample_to_img
 import pandas as pd
-
 
 BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
 
@@ -36,17 +36,17 @@ part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
 
 # Planned comparisons
-var_names_MNI = ['TSNR_noclean_MNI', 'TSNR_RETRO_MNI', 'TSNR_aggrAROMA_MNI', 'TSNR_difference_aggrAROMA_normal_MNI',
-                 'TSNR_difference_RETRO_normal_MNI',
+var_names_MNI = ['TSNR_noclean_MNI', 'TSNR_RETRO_MNI', 'TSNR_aggrAROMA_MNI', 'TSNR_difference_aggrAROMA_uncleaned_MNI',
+                 'TSNR_difference_RETRO_uncleaned_MNI',
                  'TSNR_difference_RETRO_aggrAROMA_MNI', 'TSNR_difference_aggrAROMARETRO_RETRO_MNI',
                  'TSNR_difference_aggrAROMARETRO_aggrAROMA_MNI',
-                 'TSNR_difference_aggrAROMARETRO_normal_MNI']
+                 'TSNR_difference_aggrAROMARETRO_uncleaned_MNI']
 
-var_names_native = ['TSNR_noclean_native', 'TSNR_RETRO_native', 'TSNR_aggrAROMA_native', 'TSNR_difference_aggrAROMA_normal_native',
-                 'TSNR_difference_RETRO_normal_native',
+var_names_native = ['TSNR_noclean_native', 'TSNR_RETRO_native', 'TSNR_aggrAROMA_native', 'TSNR_difference_aggrAROMA_uncleaned_native',
+                 'TSNR_difference_RETRO_uncleaned_native',
                  'TSNR_difference_RETRO_aggrAROMA_native', 'TSNR_difference_aggrAROMARETRO_RETRO_native',
                  'TSNR_difference_aggrAROMARETRO_aggrAROMA_native',
-                 'TSNR_difference_aggrAROMARETRO_normal_native']
+                 'TSNR_difference_aggrAROMARETRO_uncleaned_native']
 
 # Create object dictionary
 objects_MNI = dict.fromkeys(var_names_MNI)
@@ -61,7 +61,7 @@ stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013',
 for subject_path in part_list:
     sub_id = subject_path[-7:]
     sub_obj = Subject(sub_id)
-ATH = '/project/3013068.03/RETROICOR/TSNR/'
+
     # Account for balancing in stress/control session order
     ses_nr = 2 if sub_id in stress_list else 1
     sub_func = sub_obj.get_func_data(run=2, session=ses_nr)
@@ -94,8 +94,9 @@ ATH = '/project/3013068.03/RETROICOR/TSNR/'
         for keys, values in objects_native.items():
             objects_native[keys] = [nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()]
 
-        for keys, values in objects_LC.items():
-            objects_LC[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
+        if LC_mask != None:
+            for keys, values in objects_LC.items():
+                objects_LC[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
 
         for keys, values in objects_gm.items():
             objects_gm[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
@@ -117,7 +118,6 @@ ATH = '/project/3013068.03/RETROICOR/TSNR/'
         if LC_mask != None:
             for keys, values in objects_LC.items():
                 objects_LC[keys]= values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
-
 
 # Mean Matrices for MNI template
 mean_MNI_matrix = objects_MNI
