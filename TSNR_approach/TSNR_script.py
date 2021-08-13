@@ -32,7 +32,7 @@ import numpy.ma as ma
 from nilearn.datasets import load_mni152_brain_mask
 
 
-MNI_MASK = load_mni152_brain_mask()
+MNI_MASK = nib.load('/project/3013068.03/RETROICOR/Filled_Nilearn_MNI_Mask.nii.gz')
 BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
 
 # Load MNI mask to used masked data matrices and switch 0 to 1 and 1 to 0
@@ -95,7 +95,7 @@ for subject_long in part_list:
         tsnr_matrix_noinf_uncleaned = np.nan_to_num(tsnr_matrix_uncleaned, neginf = 0, posinf = 0)
         masked_tsnr_uncleaned = ma.array(tsnr_matrix_noinf_uncleaned, mask = mask).filled(0)
         masked_tsnr_uncleaned[masked_tsnr_uncleaned > 500], masked_tsnr_uncleaned[masked_tsnr_uncleaned < -100] = 500, -100
-        nib.save(nib.Nifti2Image(masked_tsnr_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_noclean_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(masked_tsnr_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_noclean_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # RETROICOR TSNR map
         sub_phys_3C4R = sub_phys[RETRO_model]
@@ -112,7 +112,7 @@ for subject_long in part_list:
         del func_data_phys_cleaned
         masked_tsnr_RETRO = ma.array(np.nan_to_num(tsnr_matrix_RETRO, neginf = 0, posinf = 0), mask = mask).filled(0)
         masked_tsnr_RETRO[masked_tsnr_RETRO > 500], masked_tsnr_RETRO[masked_tsnr_RETRO < -100] = 500, -100
-        nib.save(nib.Nifti2Image(masked_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(masked_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # AROMA TSNR map
         
@@ -126,7 +126,7 @@ for subject_long in part_list:
         del func_data_aroma_cleaned
         masked_tsnr_aggrAROMA = ma.array(np.nan_to_num(tsnr_matrix_aggrAROMA, neginf = 0, posinf = 0), mask = mask).filled(0)
         masked_tsnr_aggrAROMA[masked_tsnr_aggrAROMA>500], masked_tsnr_aggrAROMA[masked_tsnr_aggrAROMA<-100] = 500, -100
-        nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_aggrAROMA_{1}.nii.gz'.format(sub_id,space_identifier))
+        nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_aggrAROMA_{1}.nii.gz'.format(sub_id,space_identifier))
 
         # Combined AROMA and RETROICOR TSNR map
 
@@ -136,35 +136,35 @@ for subject_long in part_list:
         del func_data_aroma_retro_cleaned
         masked_tsnr_aggrAROMA_RETRO = ma.array(np.nan_to_num(tsnr_matrix_aggrAROMA_RETRO, neginf = 0, posinf = 0), mask = mask).filled(0)
         masked_tsnr_aggrAROMA_RETRO[masked_tsnr_aggrAROMA_RETRO > 500], masked_tsnr_aggrAROMA_RETRO[masked_tsnr_aggrAROMA_RETRO < -100]  = 500, -100
-        nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_aggrAROMA_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_aggrAROMA_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference
         unique_tsnr_aggrAROMA = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_RETRO
-        nib.save(nib.Nifti2Image(unique_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_aggrAROMARETRO_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(unique_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference AROMA
         unique_tsnr_RETRO = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_aggrAROMA
-        nib.save(nib.Nifti2Image(unique_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_aggrAROMARETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(unique_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference aggreAroma to uncleaned
         difference_aggrAROMA_uncleaned =  masked_tsnr_aggrAROMA - masked_tsnr_uncleaned
-        nib.save(nib.Nifti1Image(difference_aggrAROMA_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_aggrAROMA_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti1Image(difference_aggrAROMA_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMA_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference uncleaned vs aggrAROMA
         difference_uncleaned_aggrAROMA =  masked_tsnr_uncleaned - masked_tsnr_aggrAROMA
-        nib.save(nib.Nifti2Image(difference_uncleaned_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_uncleaned_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(difference_uncleaned_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_uncleaned_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference Combination to uncleaned
         difference_aggrAROMARETRO_uncleaned = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_uncleaned
-        nib.save(nib.Nifti2Image(difference_aggrAROMARETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_aggrAROMARETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(difference_aggrAROMARETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference RETRO to uncleaned
         difference_RETRO_uncleaned =  masked_tsnr_RETRO - masked_tsnr_uncleaned
-        nib.save(nib.Nifti2Image(difference_RETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_RETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(difference_RETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_RETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference RETRO to uncleaned
         difference_RETRO_aggrAROMA =  masked_tsnr_RETRO - masked_tsnr_aggrAROMA
-        nib.save(nib.Nifti2Image(difference_RETRO_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/tsnr_difference_RETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
+        nib.save(nib.Nifti2Image(difference_RETRO_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_RETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
 
 
         mask_list = [masked_tsnr_uncleaned, masked_tsnr_RETRO, masked_tsnr_aggrAROMA, masked_tsnr_aggrAROMA_RETRO,
