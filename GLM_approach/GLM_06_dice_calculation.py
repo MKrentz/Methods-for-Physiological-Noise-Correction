@@ -17,9 +17,9 @@ import pandas as pd
 from nilearn import plotting
 import matplotlib.pyplot as plt
 
+BASEPATH = '/project/3013068.03/RETROICOR/GLM_approach/'
 
-
-participant_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*/RETRO_vs_AROMA_revised'\
+participant_list = glob.glob(BASEPATH + 'sub-*/RETRO_vs_AROMA_revised'\
                              '/Unique_Variance_RETRO_fwe_corrected_binarised.nii.gz')
 participant_list.sort()
 
@@ -28,13 +28,13 @@ index_list = []
 for subject in participant_list:
 
     # Load respective subject
-    sub_id = subject[subject.find('sub-'): subject.find('sub-')+7]
+    sub_id = subject[subject.find('sub-'): subject.find('sub-') + 7]
 
     # Binarise and load thresholded z-map of RETROICOR explained variance beyond AROMA
     zmap_original_binarised = nib.load(subject).get_fdata()
 
     # Loop over potential misclassifications
-    zmaps_melodic_added = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
+    zmaps_melodic_added = glob.glob(BASEPATH + '{0}/'\
                                      'Melodic_Matching_corrected/potential_misclassifications/AddComp*fwe_corrected.nii.gz'.format(sub_id))
     zmaps_melodic_added.sort()
 
@@ -71,16 +71,16 @@ for subject in participant_list:
 
 # Gather results across subjects
 overall_dice = pd.concat(index_list)
-overall_dice.sort_values('Dice Coefficient',inplace=True)
-overall_dice.to_csv('/project/3013068.03/RETROICOR/Example_Visualisation/misclassification_dice_overview.txt', index=False)
+overall_dice.sort_values('Dice Coefficient', inplace = True)
+overall_dice.to_csv(BASEPATH + 'misclassification_dice_overview.txt', index = False)
 
 component_list = []
 title_list = []
 
 for index, lines in x.iterrows():
-    component_list.append(nib.load('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.\
-                               format(lines['Subject'], lines['Melodic_Component']-1)))
-    title_list.append(lines['Subject'] + ': ' + str(lines['Melodic_Component']) + ' / ' + str(np.round(lines['Dice Coefficient'],3)))
+    component_list.append(nib.load(BASEPATH + '{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.\
+                               format(lines['Subject'], lines['Melodic_Component'] - 1)))
+    title_list.append(lines['Subject'] + ': ' + str(lines['Melodic_Component']) + ' / ' + str(np.round(lines['Dice Coefficient'], 3)))
 
 # Create plot for all misclassifications sorted by dice
 fig, axes = plt.subplots(nrows = 14, ncols = 2, figsize = [20, 40])

@@ -14,16 +14,14 @@ import glob
 import numpy as np
 import nibabel as nib
 import pandas as pd
-from nilearn import glm
 from Subject_Class import Subject
 from nilearn import glm
-from nilearn import plotting
-import matplotlib.pyplot as plt
-from scipy.stats import norm
 from nilearn.glm import threshold_stats_img
 from nilearn.datasets import load_mni152_brain_mask
 
-part_list = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/sub-*')
+BASEPATH = '/project/3013068.03/RETROICOR/GLM_approach/'
+
+part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
 
 # Indicating subject having the 'stress' condition during their FIRST functional session
@@ -32,14 +30,12 @@ stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013',
 for subs in part_list:
     
     #Invoke Subject_Class to allow access to all necessary data
-    sub = Subject(subs[-7:])
-    subject = subs[-7:]
+    sub_id = subs[-7:]
+    sub = Subject(sub_id)
+
     
     # Account for balancing in stress/control session order
-    if subject in stress_list:
-        ses_nr = 2
-    elif subject not in stress_list:
-        ses_nr = 1
+    ses_nr = 2 if sub_id in stress_list else 1
     
     # Base scan settings for the used sequence
     t_r = 2.02
@@ -51,20 +47,25 @@ for subs in part_list:
     mni_mask = load_mni152_brain_mask()
     
     #GLM settings
-    melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, slice_time_ref=0.5, smoothing_fwhm=6, \
-                                                  drift_model=None, hrf_model=None, mask_img= mni_mask, verbose=1)
+    melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, 
+                                                  slice_time_ref=0.5, 
+                                                  smoothing_fwhm=6,
+                                                  drift_model=None, 
+                                                  hrf_model=None, 
+                                                  mask_img= mni_mask, 
+                                                  verbose=1)
     
     #Loading respective functional run as NII-img-like nibabel object
-    func_data = sub.get_func_data(session=ses_nr,run=2,task='RS', MNI=True)
+    func_data = sub.get_func_data(session = ses_nr, run = 2, task = 'RS', MNI = True)
     
     #All file-paths to the respective regressor files as created by 'Confound_file_creation_AROMA_model.py'
-    cardiac_phase = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/3C4R1M_vs_AROMA_corrected/cardiac*'.format(subject))
-    respiratory_phase = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                                  '3C4R1M_vs_AROMA_corrected/respiratory*'.format(subject))
-    multiplication_phase = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-                                     '3C4R1M_vs_AROMA_corrected/multiplication*'.format(subject))
+    cardiac_phase = glob.glob(BASEPATH + '{0}/3C4R1M_vs_AROMA_corrected/cardiac*'.format(sub_id))
+    respiratory_phase = glob.glob(BASEPATH + '{0}/'\
+                                  '3C4R1M_vs_AROMA_corrected/respiratory*'.format(sub_id))
+    multiplication_phase = glob.glob(BASEPATH + '{0}/'\
+                                     '3C4R1M_vs_AROMA_corrected/multiplication*'.format(sub_id))
     multiplication_phase.sort()
-    aroma_noise = glob.glob('/project/3013068.03/RETROICOR/Example_Visualisation/{0}/3C4R1M_vs_AROMA_corrected/aroma*'.format(subject))
+    aroma_noise = glob.glob(BASEPATH + '{0}/3C4R1M_vs_AROMA_corrected/aroma*'.format(sub_id))
     aroma_noise.sort()
     
     #Create lists of data contained in the regressor files
@@ -113,12 +114,12 @@ for subs in part_list:
     F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type= 'F')
     
     #Save resulting z-maps (unthresholded)
-    nib.save(F_contrast_RETRO_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO.nii.gz'.format(subject))
-    nib.save(F_contrast_AROMA_output, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA.nii.gz'.format(subject))
-    nib.save(F_contrast_shared, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO.nii.gz'.format(subject))
+    nib.save(F_contrast_RETRO_output, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO.nii.gz'.format(sub_id))
+    nib.save(F_contrast_AROMA_output, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA.nii.gz'.format(sub_id))
+    nib.save(F_contrast_shared, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO.nii.gz'.format(sub_id))
                                                            
     #Threshold maps FDR
     thresholded_RETRO_FDR, threshold_RETRO_FDR = threshold_stats_img(F_contrast_RETRO_output, alpha=.05, height_control= 'fdr' )
@@ -126,12 +127,12 @@ for subs in part_list:
     thresholded_shared_FDR, threshold_shared_FDR = threshold_stats_img(F_contrast_shared, alpha=.05, height_control= 'fdr' )
 
     #Save resulting z-maps (unthresholded)
-    nib.save(thresholded_RETRO_FDR, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fdr_corrected.nii.gz'.format(subject))
-    nib.save(thresholded_AROMA_FDR, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fdr_corrected.nii.gz'.format(subject))
-    nib.save(thresholded_shared_FDR, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fdr_corrected.nii.gz'.format(subject))
+    nib.save(thresholded_RETRO_FDR, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_AROMA_FDR, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_shared_FDR, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fdr_corrected.nii.gz'.format(sub_id))
                                                            
     #Thresholded maps FWE
     thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_contrast_RETRO_output, alpha = .05, height_control = 'bonferroni')
@@ -139,10 +140,10 @@ for subs in part_list:
     thresholded_shared_FWE, threshold_shared_FWE = threshold_stats_img(F_contrast_shared, alpha = .05, height_control = 'bonferroni')
 
     #Save resulting z-maps (unthresholded)
-    nib.save(thresholded_RETRO_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.nii.gz'.format(subject))
-    nib.save(thresholded_AROMA_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.nii.gz'.format(subject))
-    nib.save(thresholded_shared_FWE, '/project/3013068.03/RETROICOR/Example_Visualisation/{0}/'\
-             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.nii.gz'.format(subject))
+    nib.save(thresholded_RETRO_FWE, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_AROMA_FWE, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_shared_FWE, BASEPATH + '{0}/'\
+             'RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.nii.gz'.format(sub_id))
     
