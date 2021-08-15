@@ -1,4 +1,4 @@
-# RETROICOR_AROMA_Comparison
+# RETROICOR AROMA Comparison
 
 This repository contains all used analysis steps of project 3013068.03 at the Donders Center for Cognitive Neuroimaging.
 Assuming familiarity with the general project the folder/script structure is as follows:
