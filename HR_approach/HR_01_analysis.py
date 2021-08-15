@@ -17,9 +17,10 @@ from scipy import io
 import glob
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
-
+SAVEPATH = '/project/3013068.03/RETROICOR/HR_approach/'
 # Load all available participants
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
@@ -89,4 +90,33 @@ for subject_long in part_list:
     rejection_df['HR Rejection Percentage'][sub_id] = percentage_rejection
     rejection_df['Session Number'][sub_id] = ses_nr
     rejection_df['Overlap'][sub_id] = overlap
-    rejection_df.to_csv(BASEPATH + '/HR_rejections.txt')
+    rejection_df.to_csv(SAVEPATH + 'HR_rejections.txt')
+
+#plt.xlim((0, 1))
+
+fig, ax = plt.subplots()
+bp = ax.boxplot(rejection_df['HR Rejection Percentage'], widths=0.5)
+fly = bp['fliers'][0]
+names = []
+for flies in fly.get_data():
+    fly_data = flies
+
+for counter, data in rejection_df.iterrows():
+    if data['HR Rejection Percentage'] in fly_data:
+        names.append(data.name)
+
+for counter, flier in enumerate(fly.get_ydata()):
+    ax.text(1.05,
+            flier,
+            names[counter] + ': {}%'.format(np.round(flier, 2)),
+            va = 'center')
+
+plt.xticks([], rotation=-45)
+plt.tight_layout()
+plt.gca().spines['right'].set_visible(False)
+plt.gca().spines['top'].set_visible(False)
+plt.title('Heartrate Rejections', size = 11, y = 1.1)
+plt.ylabel('Percentage Rejection')
+plt.ylim(0, 50)
+fig.subplots_adjust(left=0.1)
+plt.savefig(SAVEPATH + 'HR_rejections.png')
