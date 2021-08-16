@@ -15,7 +15,7 @@ import glob
 from nilearn import plotting
 import matplotlib.pyplot as plt
 
-BASEPATH = '/project/3013068.03/RETROICOR/GLM_approach/'
+BASEPATH = '/project/3013068.03/RETROICOR/Example_Visualisation/'
 
 # Load FWE-thresholded z-maps for unique variance of RETRO
 zmaps_RETRO = glob.glob(BASEPATH + 'sub-*'
@@ -78,8 +78,9 @@ for cidx, zmap in enumerate(zmaps_RETRO):
                               title = subject_id,
                               axes = axes[int(cidx / 3), int(cidx % 3)],
                               annotate = False,
-                              output_file = '/project/3013068.03/RETROICOR/z_map_collection_RETRO.png',
                               plot_abs = False)
+
+plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_unqique_RETRO.png')
 plt.close()
 
 #Overall plotting of z-maps for AROMA unique variance
@@ -92,8 +93,9 @@ for cidx, zmap in enumerate(zmaps_AROMA):
                               title = subject_id,
                               axes=axes[int(cidx / 3), int(cidx % 3)],
                               annotate = False,
-                              output_file = '/project/3013068.03/RETROICOR/z_map_collection_AROMA.png',
                               plot_abs = False)
+
+plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_unique_AROMA.png')
 plt.close()
 
 #Overall plotting of z-maps for RETRO and AROMA shared variance
@@ -106,6 +108,6 @@ for cidx, zmap in enumerate(zmaps_shared):
                               title = subject_id,
                               axes = axes[int(cidx / 3), int(cidx % 3)],
                               annotate = False,
-                              output_file = '/project/3013068.03/RETROICOR/z_map_collection_shared.png',
                               plot_abs = False)
+plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_shared.png')
 plt.close()
