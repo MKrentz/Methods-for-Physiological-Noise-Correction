@@ -14,13 +14,20 @@ import matplotlib.pyplot as plt
 import glob
 
 BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
+
 NEW_COLUMN_NAMES = ['Index', 'TSNR_noclean', 'TSNR_RETRO',
        'TSNR_aggrAROMA', 'TSNR_difference_aggrAROMA_uncleaned',
        'TSNR_difference_RETRO_uncleaned',
        'TSNR_difference_RETRO_aggrAROMA',
        'TSNR_difference_aggrAROMARETRO_RETRO',
        'TSNR_difference_aggrAROMARETRO_aggrAROMA',
-       'TSNR_difference_aggrAROMARETRO_uncleaned']
+       'TSNR_difference_aggrAROMARETRO_uncleaned',
+                    'percent_increase_RETRO',
+                    'percent_increase_AROMA',
+                    'mean_average_RETROAROMA',
+                    'percent_increase_RETRO_mean_scaled',
+                    'percent_increase_AROMA_mean_scaled'
+                    ]
 
 
 #Create a dataframe calculating mean and confidence intervals for the full-brain TSNR map
@@ -79,14 +86,14 @@ for keys, values in df_dic.items():
     patterns2 = ["/",  "."]
 
     bar_width = 0.5
-    bars_main_effect = ('Uncleaned', 'RETROICOR', 'AROMA')
+    bars_main_effect = ('RETROICOR', 'AROMA')
     bars2_difference_effect = ('RETROICOR', 'AROMA')
 
-    y_pos1 = [0.6 , 1.2, 1.8]
+    y_pos1 = [0.6 , 1.2]
     y_pos2 = [0.6, 1.2]
     bars = ax1.bar(y_pos1,
-                  height = [values['TSNR_noclean'][0], values['TSNR_RETRO'][0], values['TSNR_aggrAROMA'][0]],
-                  yerr = [values['TSNR_noclean'][1], values['TSNR_RETRO'][1], values['TSNR_aggrAROMA'][1]],
+                  height = [values['percent_increase_RETRO'][0], values['percent_increase_AROMA'][0]],
+                  yerr = [values['percent_increase_RETRO_mean_scaled'][1], values['percent_increase_AROMA_mean_scaled'][1]],
                   width = bar_width,
                   capsize = 5,
                   edgecolor = 'black',
@@ -128,16 +135,14 @@ for keys, values in df_dic.items():
 #============================================
 
 fig = plt.figure()
-patterns1 = ["\\" , "/",  "."]
+patterns1 = ["\\" , "/"]
 bar_width = 0.5
-key_list = ['TSNR_noclean', 'TSNR_RETRO', 'TSNR_aggrAROMA']
+key_list = ['percent_increase_RETRO', 'percent_increase_AROMA']
 
-bars1 = [df_dic[keys][id][0] for keys, values in df_dic.items() for id in values if id == 'TSNR_noclean']
-bars2 = [df_dic[keys][id][0] for keys, values in df_dic.items() for id in values if id == 'TSNR_RETRO']
-bars3 = [df_dic[keys][id][0] for keys, values in df_dic.items() for id in values if id == 'TSNR_aggrAROMA']
-yerr1 = [df_dic[keys][id][1] for keys, values in df_dic.items() for id in values if id == 'TSNR_noclean']
-yerr2 = [df_dic[keys][id][1] for keys, values in df_dic.items() for id in values if id == 'TSNR_RETRO']
-yerr3 = [df_dic[keys][id][1] for keys, values in df_dic.items() for id in values if id == 'TSNR_aggrAROMA']
+bars1 = [df_dic[keys][id][0] for keys, values in df_dic.items() for id in values if id == 'percent_increase_RETRO']
+bars2 = [df_dic[keys][id][0] for keys, values in df_dic.items() for id in values if id == 'percent_increase_AROMA']
+yerr1 = [df_dic[keys][id][1] for keys, values in df_dic.items() for id in values if id == 'percent_increase_RETRO']
+yerr2 = [df_dic[keys][id][1] for keys, values in df_dic.items() for id in values if id == 'percent_increase_AROMA']
 
 r1 = [1, 3, 5, 7]
 r2 = [x + bar_width for x in r1]
@@ -165,21 +170,12 @@ plt.bar(r2,
         hatch = "/",
         label = 'RETROICOR')
 
-plt.bar(r3,
-        bars3,
-        yerr = yerr3,
-        width = bar_width,
-        capsize = 5,
-        edgecolor = 'black',
-        color = 'white',
-        hatch = ".",
-        label = 'AROMA')
 
 plt.xticks(r2, [keys for keys in df_dic.keys()], rotation=-45)
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)
 plt.legend(frameon=False)
-plt.title('Overall Main Effects', size = 11, y = 1.1)
+plt.title('Percent TSNR Change', size = 11, y = 1.1)
 fig.subplots_adjust(bottom=0.2)
 plt.savefig(BASEPATH + '/Overall_Main_Effects.png')
 
