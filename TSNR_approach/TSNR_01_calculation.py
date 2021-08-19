@@ -88,10 +88,10 @@ def shuffling(array, sub_id, seed_dict, seed_start, loop_position):
 
 
 # Subject loop
-for subject_long in part_list:
+for subject in part_list:
 
     # Subject space_identifier
-    sub_id = subject_long[-7:]
+    sub_id = subject[-7:]
     sub_obj = Subject(sub_id)
 
     # Account for balancing in stress/control session order
@@ -140,16 +140,6 @@ for subject_long in part_list:
         new_names_aroma.append(str(aroma_regressors_shuffled.columns[counter]) + '_randomised')
     aroma_regressors_shuffled.columns = new_names_aroma
 
-    """
-    # Create randomised regressors in range of original RETROICOR regressors (usually -1 to 1)
-    for counter, x in enumerate(sub_phys_3C4R1M_shuffled):
-        sub_phys_3C4R1M_shuffled[x] = np.random.uniform(low=np.min(sub_phys_3C4R1M_shuffled[x]), high=np.max(sub_phys_3C4R1M_shuffled[x]), size=(len(sub_phys_3C4R1M_shuffled[x]),))
-
-    # Create randomised regressors in range of original AROMA regressors
-    for counter, x in enumerate(aroma_regressors_shuffled):
-        aroma_regressors_shuffled[x] = np.random.uniform(low=np.min(aroma_regressors_shuffled[x]), high=np.max(aroma_regressors_shuffled[x]), size=(len(aroma_regressors_shuffled[x]),))
-    """
-
     # Shuffling
     aroma_regressors_shuffled = aroma_regressors.copy()
     sub_phys_3C4R1M_shuffled = sub_phys_3C4R1M.copy()
@@ -157,7 +147,6 @@ for subject_long in part_list:
     if not any(lists for lists in seed_dict[sub_id]):
         seed_dict[sub_id][0] = [None] * len(sub_phys_3C4R1M_shuffled.columns)
         seed_dict[sub_id][1] = [None] * len(aroma_regressors_shuffled.columns)
-    
     
     seed_start = 0
     for vector_number, vectors in enumerate(sub_phys_3C4R1M_shuffled):
@@ -244,10 +233,6 @@ for subject_long in part_list:
         difference_aggrAROMA_uncleaned =  masked_tsnr_aggrAROMA - masked_tsnr_uncleaned
         nib.save(nib.Nifti1Image(difference_aggrAROMA_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMA_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
-        # Difference uncleaned vs aggrAROMA
-        difference_uncleaned_aggrAROMA =  masked_tsnr_uncleaned - masked_tsnr_aggrAROMA
-        nib.save(nib.Nifti2Image(difference_uncleaned_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_uncleaned_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
-
         # Difference Combination to uncleaned
         difference_aggrAROMARETRO_uncleaned = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_uncleaned
         nib.save(nib.Nifti2Image(difference_aggrAROMARETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
@@ -256,45 +241,57 @@ for subject_long in part_list:
         difference_RETRO_uncleaned =  masked_tsnr_RETRO - masked_tsnr_uncleaned
         nib.save(nib.Nifti2Image(difference_RETRO_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_RETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
-        # Difference RETRO to uncleaned
+        # Difference RETRO to aggrAROMA
         difference_RETRO_aggrAROMA =  masked_tsnr_RETRO - masked_tsnr_aggrAROMA
         nib.save(nib.Nifti2Image(difference_RETRO_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_RETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
 
+        # Difference Percent RETRO
+        percent_RETRO_uncleaned =  ((masked_tsnr_RETRO / masked_tsnr_uncleaned) - 1) * 100
+        nib.save(nib.Nifti2Image(percent_RETRO_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/TSNR_percent_RETRO_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
 
+        # Difference Percent AROMA
+        percent_aggrAROMA_uncleaned = ((masked_tsnr_aggrAROMA / masked_tsnr_uncleaned) - 1) * 100
+        nib.save(nib.Nifti2Image(percent_aggrAROMA_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/TSNR_percent_aggrAROMA_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
         mask_list = [masked_tsnr_uncleaned, masked_tsnr_RETRO, masked_tsnr_aggrAROMA, masked_tsnr_aggrAROMA_RETRO,
-                     unique_tsnr_aggrAROMA, unique_tsnr_RETRO, difference_aggrAROMA_uncleaned, difference_uncleaned_aggrAROMA,
-                     difference_aggrAROMARETRO_uncleaned, difference_RETRO_uncleaned, difference_RETRO_aggrAROMA]
+                     unique_tsnr_aggrAROMA, unique_tsnr_RETRO, difference_aggrAROMA_uncleaned,
+                     difference_aggrAROMARETRO_uncleaned, difference_RETRO_uncleaned, difference_RETRO_aggrAROMA,
+                     percent_RETRO_uncleaned, percent_aggrAROMA_uncleaned]
 
 
         #Create Average TSNR images in MNI space for all comparisons
         if sub_id == part_list[0][-7:] and func_data_counter == 0:
-            tsnr_noclean_MNI = masked_tsnr_uncleaned[:,:,:,np.newaxis]
-            tsnr_RETRO_MNI = masked_tsnr_RETRO[:,:,:,np.newaxis]
-            tsnr_aggrAROMA_MNI = masked_tsnr_aggrAROMA[:,:,:,np.newaxis]
-            tsnr_aggrAROMARETRO_MNI = masked_tsnr_aggrAROMA_RETRO[:,:,:,np.newaxis]
-            tsnr_difference_aggrAROMARETRO_RETRO_MNI = unique_tsnr_aggrAROMA[:,:,:,np.newaxis]
-            tsnr_difference_aggrAROMARETRO_aggrAROMA_MNI = unique_tsnr_RETRO[:,:,:,np.newaxis]
-            tsnr_difference_aggrAROMA_uncleaned_MNI = difference_aggrAROMA_uncleaned[:,:,:,np.newaxis]
-            tsnr_difference_uncleaned_aggrAROMA_MNI = difference_uncleaned_aggrAROMA[:,:,:,np.newaxis]
-            tsnr_difference_aggrAROMARETRO_uncleaned_MNI = difference_aggrAROMARETRO_uncleaned[:,:,:,np.newaxis]
-            tsnr_difference_RETRO_uncleaned_MNI = difference_RETRO_uncleaned[:,:,:,np.newaxis]
-            tsnr_difference_RETRO_aggrAROMA_MNI = difference_RETRO_aggrAROMA[:,:,:,np.newaxis]
+            tsnr_noclean_MNI = masked_tsnr_uncleaned[:, :, :, np.newaxis]
+            tsnr_RETRO_MNI = masked_tsnr_RETRO[:, :, :, np.newaxis]
+            tsnr_aggrAROMA_MNI = masked_tsnr_aggrAROMA[:, :, :, np.newaxis]
+            tsnr_aggrAROMARETRO_MNI = masked_tsnr_aggrAROMA_RETRO[:, :, :, np.newaxis]
+            tsnr_difference_aggrAROMARETRO_RETRO_MNI = unique_tsnr_aggrAROMA[:, :, :, np.newaxis]
+            tsnr_difference_aggrAROMARETRO_aggrAROMA_MNI = unique_tsnr_RETRO[:, :, :, np.newaxis]
+            tsnr_difference_aggrAROMA_uncleaned_MNI = difference_aggrAROMA_uncleaned[:, :, :, np.newaxis]
+            tsnr_difference_aggrAROMARETRO_uncleaned_MNI = difference_aggrAROMARETRO_uncleaned[:, :, :, np.newaxis]
+            tsnr_difference_RETRO_uncleaned_MNI = difference_RETRO_uncleaned[:, :, :, np.newaxis]
+            tsnr_difference_RETRO_aggrAROMA_MNI = difference_RETRO_aggrAROMA[:, :, :, np.newaxis]
+            tsnr_percent_RETRO_uncleaned_MNI = percent_RETRO_uncleaned[:, :, :, np.newaxis]
+            tsnr_percent_AROMA_uncleaned_MNI = percent_aggrAROMA_uncleaned[:, :, :, np.newaxis]
 
             output_list = [tsnr_noclean_MNI, tsnr_RETRO_MNI, tsnr_aggrAROMA_MNI, tsnr_aggrAROMARETRO_MNI,
                            tsnr_difference_aggrAROMARETRO_RETRO_MNI, tsnr_difference_aggrAROMARETRO_aggrAROMA_MNI,
-                           tsnr_difference_aggrAROMA_uncleaned_MNI, tsnr_difference_uncleaned_aggrAROMA_MNI,
+                           tsnr_difference_aggrAROMA_uncleaned_MNI,
                            tsnr_difference_aggrAROMARETRO_uncleaned_MNI, tsnr_difference_RETRO_uncleaned_MNI,
-                           tsnr_difference_RETRO_aggrAROMA_MNI]
+                           tsnr_difference_RETRO_aggrAROMA_MNI, tsnr_percent_RETRO_uncleaned_MNI,
+                           tsnr_percent_AROMA_uncleaned_MNI]
 
         elif sub_id != part_list[0][-7:] and func_data_counter == 0:
             for output_counter, output in enumerate(output_list):
-                output_list[output_counter] = np.concatenate((output, mask_list[output_counter][:,:,:,np.newaxis]), axis=3)
+                output_list[output_counter] = np.concatenate((output, mask_list[output_counter][:, :, :, np.newaxis]), axis = 3)
 
 output_list_names = ['tsnr_noclean_MNI', 'tsnr_RETRO_MNI', 'tsnr_aggrAROMA_MNI', 'tsnr_aggrAROMARETRO_MNI',
                            'tsnr_difference_aggrAROMARETRO_RETRO_MNI', 'tsnr_difference_aggrAROMARETRO_aggrAROMA_MNI',
-                           'tsnr_difference_aggrAROMA_uncleaned_MNI', 'tsnr_difference_uncleaned_aggrAROMA_MNI',
+                           'tsnr_difference_aggrAROMA_uncleaned_MNI',
                            'tsnr_difference_aggrAROMARETRO_uncleaned_MNI', 'tsnr_difference_RETRO_uncleaned_MNI',
-                           'tsnr_difference_RETRO_aggrAROMA_MNI']
+                           'tsnr_difference_RETRO_aggrAROMA_MNI', 'tsnr_percent_RETRO_uncleaned_MNI',
+                     'tsnr_percent_AROMA_uncleaned_MNI']
 
 for output_counter, output in enumerate(output_list):
     nib.save(nib.Nifti2Image(np.mean(output, axis = 3), affine = func_data.affine, header = func_data.header), BASEPATH + 'Overall_{0}.nii.gz'.format(output_list_names[output_counter]))
