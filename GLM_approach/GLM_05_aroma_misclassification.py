@@ -21,7 +21,7 @@ from nilearn.glm import threshold_stats_img
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-BASEPATH = '/project/3013068.03/RETROICOR/GLM_approach/'
+BASEPATH = '/project/3013068.03/RETROICOR/Example_Visualisation/'
 
 # Pools all available summary files
 summary_files = glob.glob(BASEPATH + 'sub-*/Melodic_Matching_corrected/*summary.txt')
@@ -141,7 +141,7 @@ for summary_counter, summary in enumerate(summary_files):
 
             # Save resulting z-maps (unthresholded)
             nib.save(F_RETRO_unique_added_comp_output, BASEPATH + '{0}/'\
-                     'Melodic_Matching_corrected/potential_misclassifications/{1}.nii.gz'.format(sub_id, 'AddComp_' + str(potential_misclass_id[component_id] + 1)))
+                     'Melodic_Matching_corrected/potential_misclassifications/{1}_uncorrected.nii.gz'.format(sub_id, 'AddComp_' + str(potential_misclass_id[component_id] + 1)))
 
             # Thresholded maps FWE
             thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output,
@@ -151,6 +151,15 @@ for summary_counter, summary in enumerate(summary_files):
             # Save resulting z-maps FWE-thresholded 0.05
             nib.save(thresholded_RETRO_FWE, BASEPATH + '{0}/'\
                  'Melodic_Matching_corrected/potential_misclassifications/{1}_fwe_corrected.nii.gz'.format(sub_id,
+                                                                                                           'AddComp_' + str(potential_misclass_id[component_id]+1)))
+            # Thresholded maps FDR
+            thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output,
+                                                                             alpha = .05,
+                                                                             height_control = 'fdr')
+
+            # Save resulting z-maps FDR-thresholded 0.05
+            nib.save(thresholded_RETRO_FWE, BASEPATH + '{0}/'\
+                 'Melodic_Matching_corrected/potential_misclassifications/{1}_fdr_corrected.nii.gz'.format(sub_id,
                                                                                                            'AddComp_' + str(potential_misclass_id[component_id]+1)))
 
             # Plot thresholded results
