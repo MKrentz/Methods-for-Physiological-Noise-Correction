@@ -82,25 +82,26 @@ for keys, values in df_dic.items():
 
     fig = plt.figure()
     ax1 = fig.add_subplot(121)
-    patterns1 = ["\\" , "/",  "."]
-    patterns2 = ["/",  "."]
+    colors = ['dimgray','whitesmoke']
 
     bar_width = 0.5
     bars_main_effect = ('RETROICOR', 'AROMA')
     bars2_difference_effect = ('RETROICOR', 'AROMA')
 
-    y_pos1 = [0.6 , 1.2]
+    y_pos1 = [0.6, 1.2]
     y_pos2 = [0.6, 1.2]
+    plt.ylim(0,80)
     bars = ax1.bar(y_pos1,
                   height = [values['percent_increase_RETRO'][0], values['percent_increase_AROMA'][0]],
                   yerr = [values['percent_increase_RETRO_mean_scaled'][1], values['percent_increase_AROMA_mean_scaled'][1]],
                   width = bar_width,
                   capsize = 5,
-                  edgecolor = 'black',
-                  color = 'white')
+                   edgecolor = 'black',
+                   color = ['dimgray', 'whitesmoke'])
 
-    for bar, pattern in zip(bars, patterns1):
-        bar.set_hatch(pattern)
+    #for bar, pattern in zip(bars, colors):
+    #    bar.set_color(pattern)
+     #   bar.set_edgecolor = 'black'
 
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
@@ -112,12 +113,12 @@ for keys, values in df_dic.items():
                   height = [values['TSNR_difference_aggrAROMARETRO_aggrAROMA'][0], values['TSNR_difference_aggrAROMARETRO_RETRO'][0]],
                   yerr = [values['TSNR_difference_aggrAROMARETRO_aggrAROMA'][1], values['TSNR_difference_aggrAROMARETRO_RETRO'][1]],
                   width = bar_width,
-                  capsize = 7,
+                  capsize = 5,
                   edgecolor = 'black',
-                  color = 'white')
+                    color = ['dimgray','whitesmoke'])
 
-    for bar, pattern in zip(bars2, patterns2):
-        bar.set_hatch(pattern)
+    #for bar, pattern in zip(bars2, colors):
+    #    bar.set_color(pattern)
 
 
     plt.xticks(y_pos2, bars2_difference_effect, rotation = -45)
@@ -156,9 +157,8 @@ plt.bar(r1,
         width = bar_width,
         capsize = 5,
         edgecolor = 'black',
-        color = 'white',
-        hatch = "\\",
-        label = 'Uncleaned')
+        color = 'dimgray',
+        label = 'RETROICOR')
 
 plt.bar(r2,
         bars2,
@@ -166,9 +166,8 @@ plt.bar(r2,
         width = bar_width,
         capsize = 5,
         edgecolor = 'black',
-        color = 'white',
-        hatch = "/",
-        label = 'RETROICOR')
+        color = 'whitesmoke',
+        label = 'AROMA')
 
 
 plt.xticks(r2, [keys for keys in df_dic.keys()], rotation=-45)
@@ -209,7 +208,7 @@ plt.bar(r1,
         width = bar_width,
         capsize = 5,
         edgecolor = 'black',
-        color = 'white',
+        color = 'dimgray',
         hatch = "\\",
         label = 'RETROICOR')
 
@@ -219,7 +218,7 @@ plt.bar(r2,
         width = bar_width,
         capsize = 5,
         edgecolor = 'black',
-        color = 'white',
+        color = 'whitesmoke',
         hatch = "/",
         label = 'AROMA')
 
