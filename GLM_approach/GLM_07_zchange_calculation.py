@@ -81,7 +81,7 @@ title_list = []
 for index, lines in overall_z_change.iterrows():
     component_list.append(nib.load(BASEPATH + '{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.\
                                format(lines['Subject'], lines['Melodic Component'] - 1)))
-    title_list.append(lines['Subject'] + ': ' + str(lines['Melodic Component']) + ' / ' + str(np.round(lines['Z Change'], 3)))
+    title_list.append(lines['Subject'] + ': Component ' + str(lines['Melodic Component']) + ' / Z Change ' + str(np.round(lines['Z Change'], 3)))
 
 
 # Create plot for all misclassifications sorted by z_change
@@ -94,6 +94,7 @@ for component_counter, component in enumerate(component_list):
                               axes = axes[int(component_counter / 2), int(component_counter % 2)],
                               annotate=False,
                               plot_abs = False)
+    print('{}% Done!'.format(component_counter / len(component_list) * 100))
 
 plt.savefig('/project/3013068.03/RETROICOR/overall_z_change_misclassifications.png')
 
