@@ -181,10 +181,10 @@ for subject in part_list:
 
         # Full brain uncleaned TSNR map
         noclean_dummy = pd.concat([sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled], axis = 1)
-        fig = plot_design_matrix(retro_dummy)
+        fig = plot_design_matrix(noclean_dummy)
         plt.savefig(BASEPATH + '{0}/confounds_cleaning_noclean.png'.format(sub_id))
         func_data_uncleaned_dummy = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = noclean_dummy, t_r = 2.02)
-        tsnr_matrix_uncleaned = np.divide(np.mean(func_data_uncleaned_dummy,axis = 3), np.std(func_data_uncleaned_dummy,axis = 3))
+        tsnr_matrix_uncleaned = np.divide(np.mean(func_data_uncleaned_dummy.get_fdata(), axis = 3), np.std(func_data_uncleaned_dummy.get_fdata(), axis = 3))
         tsnr_matrix_noinf_uncleaned = np.nan_to_num(tsnr_matrix_uncleaned, neginf = 0, posinf = 0)
         masked_tsnr_uncleaned = ma.array(tsnr_matrix_noinf_uncleaned, mask = mask).filled(0)
         masked_tsnr_uncleaned[masked_tsnr_uncleaned > 500], masked_tsnr_uncleaned[masked_tsnr_uncleaned < -100] = 500, -100
