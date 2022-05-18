@@ -39,7 +39,7 @@ for subject_long in part_list:
     fmriprep_confounds_trimmed.to_csv(output_confound_file, sep = ' ', header = None, index = False)
 
     #Selection of aCompCor components
-    aCompCor_selection = fmriprep_confounds[['a_comp_cor_01', 'a_comp_cor_02', 'a_comp_cor_03', 'a_comp_cor_04', 'a_comp_cor_05']]
+    aCompCor_selection = fmriprep_confounds[['a_comp_cor_00', 'a_comp_cor_01', 'a_comp_cor_02', 'a_comp_cor_03', 'a_comp_cor_04']]
     aCompCor_confounds_trimmed = aCompCor_selection
     output_aCompCor_file = BASEPATH + '{0}/confounds/aCompCor_all_{0}_ses-0{1}_run-02.txt'.format(sub_id, str(ses_nr))
     aCompCor_confounds_trimmed.to_csv(output_aCompCor_file, sep = ' ', header = None, index = False)
