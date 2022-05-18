@@ -38,7 +38,13 @@ for subject_long in part_list:
     output_confound_file = BASEPATH + '{0}/3C4R1M_vs_AROMA_corrected/Resting_State_confounds_all_{0}_ses-0{1}_run-02.txt'.format(sub_id, str(ses_nr))
     fmriprep_confounds_trimmed.to_csv(output_confound_file, sep = ' ', header = None, index = False)
 
-    # Addition of non-aggressive RETORICOR signal components to nuisance file for in-model non-aggressive AROMA
+    #Selection of aCompCor components
+    aCompCor_selection = fmriprep_confounds[['a_comp_cor_01', 'a_comp_cor_02', 'a_comp_cor_03', 'a_comp_cor_04', 'a_comp_cor_05']]
+    aCompCor_confounds_trimmed = aCompCor_selection
+    output_aCompCor_file = BASEPATH + '{0}/3C4R1M_vs_AROMA_corrected/aCompCor_all_{0}_ses-0{1}_run-02.txt'.format(sub_id, str(ses_nr))
+    aCompCor_confounds_trimmed.to_csv(output_confound_file, sep = ' ', header = None, index = False)
+
+    # Addition of non-aggressive AROMA signal components to nuisance file for in-model non-aggressive AROMA
     aroma_noise_ics = glob.glob(FMRIPREP_PATH + '{0}/ses-mri0{1}/func/*RS*run-2*AROMAnoiseICs*'.format(sub_id, str(ses_nr)))[0]
     aroma_noise_ics_text = np.loadtxt(aroma_noise_ics, delimiter = ',', dtype = int).tolist()
     aroma_noise_ics_text = [ic - 1 for ic in aroma_noise_ics_text]
@@ -52,6 +58,12 @@ for subject_long in part_list:
     output_confound_file = BASEPATH + \
                            '{0}/3C4R1M_vs_AROMA_corrected/Resting_State_confounds_all_{0}_ses-0{1}_run-02_combined+nonaggrAROMA.txt'.format(sub_id, str(ses_nr))
     combination_confounds_mixing.to_csv(output_confound_file, sep = ' ', header = None, index = False)
+    
+    # Addition of aCompCor
+    combination_confounds_aCompCor = pd.concat([fmriprep_confounds_trimmed, aCompCor_confounds_trimmed], axis = 1)
+    output_confound_aCompCor_file = BASEPATH + \
+       '{0}/3C4R1M_vs_AROMA_corrected/Resting_State_confounds_all_{0}_ses-0{1}_run-02_combined+aCompCor.txt'.format(sub_id, str(ses_nr))
+    
     
     # Retroicor Part
     sub_physio = sub.get_physio(session = ses_nr-1, run = 2, task = 'RS')
