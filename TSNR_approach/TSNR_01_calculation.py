@@ -33,9 +33,10 @@ import random
 from nilearn.plotting import plot_design_matrix
 import matplotlib.pyplot as plt
 import json
+import gc
 
 MNI_MASK = nib.load('/project/3013068.03/RETROICOR/Filled_Nilearn_MNI_Mask.nii.gz')
-BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
+BASEPATH = '/project/3013068.03/test/TSNR_approach/'
 
 # Load MNI mask to used masked data matrices and switch 0 to 1 and 1 to 0
 mni_mat = MNI_MASK.get_fdata()
@@ -125,7 +126,9 @@ for subject in part_list:
     aroma_sum = sum((itm.count("aroma_motion") for itm in confounds_column_index))
     aroma_variables = confounds_column_index[-aroma_sum:]
     aroma_regressors = sub_confounds[aroma_variables]
-
+    
+    #aCompCor addition
+    acompcor_regressors = sub_confounds[['a_comp_cor_0{0}'.format(x) for x in range(5)]] 
 
     # New column names for padding variables (RETRO)
     sub_phys_3C4R1M_shuffled = sub_phys_3C4R1M.copy()
@@ -140,14 +143,23 @@ for subject in part_list:
     for counter in range(0,len(aroma_regressors_shuffled.columns)):
         new_names_aroma.append(str(aroma_regressors_shuffled.columns[counter]) + '_randomised')
     aroma_regressors_shuffled.columns = new_names_aroma
+    
+    # New column names for padding variables (aCompCor)
+    acompcor_regressors_shuffled = acompcor_regressors.copy()
+    new_names_acompcor = []
+    for counter in range(0,len(acompcor_regressors_shuffled.columns)):
+        new_names_acompcor.append(str(acompcor_regressors_shuffled.columns[counter]) + '_randomised')
+    acompcor_regressors_shuffled.columns = new_names_acompcor
 
     # Shuffling
     aroma_regressors_shuffled = aroma_regressors.copy()
     sub_phys_3C4R1M_shuffled = sub_phys_3C4R1M.copy()
+    acompcor_regressors_shuffled = acompcor_regressors.copy()
     
     if not any(lists for lists in seed_dict[sub_id]):
         seed_dict[sub_id][0] = [None] * len(sub_phys_3C4R1M_shuffled.columns)
         seed_dict[sub_id][1] = [None] * len(aroma_regressors_shuffled.columns)
+        seed_dict[sub_id][2] = [None] * len(acompcor_regressors_shuffled.columns)
     
     seed_start = 0
     for vector_number, vectors in enumerate(sub_phys_3C4R1M_shuffled):
@@ -164,7 +176,13 @@ for subject in part_list:
                                                        seed_dict=seed_dict,
                                                        seed_start=seed_start,
                                                        loop_position=vector_number)
-
+    seed_start = 2
+    for vector_number, vectors in enumerate(acompcor_regressors_shuffled):
+        acompcor_regressors_shuffled[vectors] = shuffling(acompcor_regressors_shuffled[vectors].copy(),
+                                                       sub_id=sub_id,
+                                                       seed_dict=seed_dict,
+                                                       seed_start=seed_start,
+                                                       loop_position=vector_number)
 
     # Account for processing in MNI space (for MNI-mask and Brainstem Mask) as well as native space (LC mask and GM mask)
     func_data_list = [func_data_mni, func_data_native]
@@ -180,21 +198,23 @@ for subject in part_list:
             del func_data_mni
 
         # Full brain uncleaned TSNR map
-        noclean_dummy = pd.concat([sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled], axis = 1)
+        noclean_dummy = pd.concat([sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(noclean_dummy)
         plt.savefig(BASEPATH + '{0}/confounds_cleaning_noclean.png'.format(sub_id))
+        plt.close()
         func_data_uncleaned_dummy = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = noclean_dummy, t_r = 2.02)
         tsnr_matrix_uncleaned = np.divide(np.mean(func_data_uncleaned_dummy.get_fdata(), axis = 3), np.std(func_data_uncleaned_dummy.get_fdata(), axis = 3))
         tsnr_matrix_noinf_uncleaned = np.nan_to_num(tsnr_matrix_uncleaned, neginf = 0, posinf = 0)
+        del func_data_uncleaned_dummy
         masked_tsnr_uncleaned = ma.array(tsnr_matrix_noinf_uncleaned, mask = mask).filled(0)
         masked_tsnr_uncleaned[masked_tsnr_uncleaned > 500], masked_tsnr_uncleaned[masked_tsnr_uncleaned < -100] = 500, -100
         nib.save(nib.Nifti2Image(masked_tsnr_uncleaned, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_noclean_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # RETROICOR TSNR map
-
-        retro_dummy = pd.concat([sub_phys_3C4R1M, aroma_regressors_shuffled], axis = 1)
+        retro_dummy = pd.concat([sub_phys_3C4R1M, aroma_regressors_acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(retro_dummy)
         plt.savefig(BASEPATH + '{0}/confounds_cleaning_RETROICOR.png'.format(sub_id))
+        plt.close()
         func_data_phys_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = retro_dummy, t_r = 2.02)
         tsnr_matrix_RETRO = np.divide(np.mean(func_data_phys_cleaned.get_fdata(), axis = 3), np.std(func_data_phys_cleaned.get_fdata(), axis = 3))
         del func_data_phys_cleaned
@@ -203,9 +223,10 @@ for subject in part_list:
         nib.save(nib.Nifti2Image(masked_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # AROMA TSNR map
-        aroma_dummy = pd.concat([aroma_regressors, sub_phys_3C4R1M_shuffled], axis = 1)
+        aroma_dummy = pd.concat([aroma_regressors, sub_phys_3C4R1M_shuffled, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(aroma_dummy)
         plt.savefig(BASEPATH + '{0}/confounds_cleaning_AROMA.png'.format(sub_id))
+        plt.close()
         func_data_aroma_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = aroma_dummy, t_r = 2.02)
         tsnr_matrix_aggrAROMA = np.divide(np.mean(func_data_aroma_cleaned.get_fdata(), axis = 3), np.std(func_data_aroma_cleaned.get_fdata(),axis = 3))
         del func_data_aroma_cleaned
@@ -213,8 +234,23 @@ for subject in part_list:
         masked_tsnr_aggrAROMA[masked_tsnr_aggrAROMA>500], masked_tsnr_aggrAROMA[masked_tsnr_aggrAROMA<-100] = 500, -100
         nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_aggrAROMA_{1}.nii.gz'.format(sub_id,space_identifier))
 
-        # Combined AROMA and RETROICOR TSNR map
+        # aCompCor TSNR map
+        acompcor_dummy = pd.concat([acompcor_regressors, sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled], axis = 1)
+        fig = plot_design_matrix(aroma_dummy)
+        plt.savefig(BASEPATH + '{0}/confounds_cleaning_aCompCor.png'.format(sub_id))
+        plt.close()
+        func_data_acompcor_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = acompcor_dummy, t_r = 2.02)
+        tsnr_matrix_acompcor = np.divide(np.mean(func_data_acompcor_cleaned.get_fdata(), axis = 3), np.std(func_data_acompcor_cleaned.get_fdata(),axis = 3))
+        del func_data_acompcor_cleaned
+        masked_tsnr_acompcor = ma.array(np.nan_to_num(tsnr_matrix_acompcor, neginf = 0, posinf = 0), mask = mask).filled(0)
+        masked_tsnr_acompcor[masked_tsnr_acompcor>500], masked_tsnr_acompcor[masked_tsnr_acompcor<-100] = 500, -100
+        nib.save(nib.Nifti2Image(masked_tsnr_acompcor, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_acompcor_{1}.nii.gz'.format(sub_id,space_identifier))
 
+        gc.collect()
+        
+        # Combined AROMA and acompcor TSNR map
+        
+        # Combined AROMA and RETROICOR TSNR map
         combined_aroma_retro = pd.concat([sub_phys_3C4R1M, aroma_regressors], axis = 1)
         fig = plot_design_matrix(combined_aroma_retro)
         plt.savefig(BASEPATH + '{0}/confounds_cleaning_AROMA+RETRO.png'.format(sub_id))
@@ -225,13 +261,23 @@ for subject in part_list:
         masked_tsnr_aggrAROMA_RETRO[masked_tsnr_aggrAROMA_RETRO > 500], masked_tsnr_aggrAROMA_RETRO[masked_tsnr_aggrAROMA_RETRO < -100]  = 500, -100
         nib.save(nib.Nifti2Image(masked_tsnr_aggrAROMA_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_aggrAROMA_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
-        # Difference
+        # Unqiue AROMA effect & Percent
         unique_tsnr_aggrAROMA = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_RETRO
         nib.save(nib.Nifti2Image(unique_tsnr_aggrAROMA, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
+
+        percent_unique_tsnr_aggrAROMA = ((((masked_tsnr_aggrAROMA_RETRO / masked_tsnr_uncleaned) - 1) * 100) - (((masked_tsnr_RETRO / masked_tsnr_uncleaned) - 1) * 100))
+        nib.save(nib.Nifti2Image(unique_tsnr_aggrAROMA, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/TSNR_difference_percent_aggrAROMARETRO_RETRO_{1}.nii.gz'.format(sub_id, space_identifier))
 
         # Difference AROMA
         unique_tsnr_RETRO = masked_tsnr_aggrAROMA_RETRO - masked_tsnr_aggrAROMA
         nib.save(nib.Nifti2Image(unique_tsnr_RETRO, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/TSNR_difference_aggrAROMARETRO_aggrAROMA_{1}.nii.gz'.format(sub_id, space_identifier))
+
+        percent_unique_tsnr_RETRO = ((((masked_tsnr_aggrAROMA_RETRO / masked_tsnr_uncleaned) - 1) * 100) - (
+                    ((masked_tsnr_aggrAROMA / masked_tsnr_uncleaned) - 1) * 100))
+        nib.save(nib.Nifti2Image(unique_tsnr_RETRO, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/TSNR_difference_percent_aggrAROMARETRO_aggrAROMA_{1}.nii.gz'.format(sub_id,
+                                                                                                     space_identifier))
 
         # Difference aggreAroma to uncleaned
         difference_aggrAROMA_uncleaned =  masked_tsnr_aggrAROMA - masked_tsnr_uncleaned
@@ -261,7 +307,8 @@ for subject in part_list:
         mask_list = [masked_tsnr_uncleaned, masked_tsnr_RETRO, masked_tsnr_aggrAROMA, masked_tsnr_aggrAROMA_RETRO,
                      unique_tsnr_aggrAROMA, unique_tsnr_RETRO, difference_aggrAROMA_uncleaned,
                      difference_aggrAROMARETRO_uncleaned, difference_RETRO_uncleaned, difference_RETRO_aggrAROMA,
-                     percent_RETRO_uncleaned, percent_aggrAROMA_uncleaned]
+                     percent_RETRO_uncleaned, percent_aggrAROMA_uncleaned, percent_unique_tsnr_aggrAROMA,
+                     percent_unique_tsnr_RETRO]
 
 
         #Create Average TSNR images in MNI space for all comparisons
@@ -278,13 +325,15 @@ for subject in part_list:
             tsnr_difference_RETRO_aggrAROMA_MNI = difference_RETRO_aggrAROMA[:, :, :, np.newaxis]
             tsnr_percent_RETRO_uncleaned_MNI = percent_RETRO_uncleaned[:, :, :, np.newaxis]
             tsnr_percent_AROMA_uncleaned_MNI = percent_aggrAROMA_uncleaned[:, :, :, np.newaxis]
-
+            tsnr_percent_unique_AROMA = percent_unique_tsnr_aggrAROMA[:, :, :, np.newaxis]
+            tsnr_percent_unique_RETRO = percent_unique_tsnr_RETRO[:, :, :, np.newaxis]
             output_list = [tsnr_noclean_MNI, tsnr_RETRO_MNI, tsnr_aggrAROMA_MNI, tsnr_aggrAROMARETRO_MNI,
                            tsnr_difference_aggrAROMARETRO_RETRO_MNI, tsnr_difference_aggrAROMARETRO_aggrAROMA_MNI,
                            tsnr_difference_aggrAROMA_uncleaned_MNI,
                            tsnr_difference_aggrAROMARETRO_uncleaned_MNI, tsnr_difference_RETRO_uncleaned_MNI,
                            tsnr_difference_RETRO_aggrAROMA_MNI, tsnr_percent_RETRO_uncleaned_MNI,
-                           tsnr_percent_AROMA_uncleaned_MNI]
+                           tsnr_percent_AROMA_uncleaned_MNI, tsnr_percent_unique_AROMA,
+                           tsnr_percent_unique_RETRO]
 
         elif sub_id != part_list[0][-7:] and func_data_counter == 0:
             for output_counter, output in enumerate(output_list):
@@ -295,7 +344,8 @@ output_list_names = ['tsnr_noclean_MNI', 'tsnr_RETRO_MNI', 'tsnr_aggrAROMA_MNI',
                            'tsnr_difference_aggrAROMA_uncleaned_MNI',
                            'tsnr_difference_aggrAROMARETRO_uncleaned_MNI', 'tsnr_difference_RETRO_uncleaned_MNI',
                            'tsnr_difference_RETRO_aggrAROMA_MNI', 'tsnr_percent_RETRO_uncleaned_MNI',
-                     'tsnr_percent_AROMA_uncleaned_MNI']
+                     'tsnr_percent_AROMA_uncleaned_MNI', 'tsnr_percent_unique_AROMA',
+                     'tsnr_percent_unique_RETRO']
 
 for output_counter, output in enumerate(output_list):
     nib.save(nib.Nifti2Image(np.mean(output, axis = 3), affine = func_data.affine, header = func_data.header), BASEPATH + 'Overall_{0}.nii.gz'.format(output_list_names[output_counter]))
