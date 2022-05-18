@@ -19,18 +19,22 @@ from nilearn import glm
 from nilearn.glm import threshold_stats_img
 from nilearn.datasets import load_mni152_brain_mask
 
-BAsEPATH = '/project/3013068.03/test/GLM_approach/'
 
-part_list = glob.glob(BAsEPATH + 'sub-*')
+BASEPATH = '/project/3013068.03/test/GLM_approach/'
+part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
+
+part_list = [part_list[0]]
 
 # Indicating subject having the 'stress' condition during their FIRsT functional session
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
 
 for subs in part_list:
     
+
     #Invoke subject_Class to allow access to all necessary data
     sub_id = subs[-7:]
+    glm_path = '/project/3013068.03/test/GLM_approach/{0}/glm_output/'.format(sub_id)
     sub = Subject(sub_id)
 
     
@@ -59,16 +63,16 @@ for subs in part_list:
     func_data = sub.get_func_data(session = ses_nr, run = 2, task = 'RS', MNI = True)
     
     #All file-paths to the respective regressor files as created by 'Confound_file_creation_aroma_model.py'
-    cardiac_phase = glob.glob(BAsEPATH + '{0}/confounds/cardiac*'.format(sub_id))
-    respiratory_phase = glob.glob(BAsEPATH + '{0}/'\
+    cardiac_phase = glob.glob(BASEPATH + '{0}/confounds/cardiac*'.format(sub_id))
+    respiratory_phase = glob.glob(BASEPATH + '{0}/'\
                                   'confounds/respiratory*'.format(sub_id))
-    multiplication_phase = glob.glob(BAsEPATH + '{0}/'\
+    multiplication_phase = glob.glob(BASEPATH + '{0}/'\
                                      'confounds/multiplication*'.format(sub_id))
     multiplication_phase.sort()
-    aroma_noise = glob.glob(BAsEPATH + '{0}/confounds/aroma*'.format(sub_id))
+    aroma_noise = glob.glob(BASEPATH + '{0}/confounds/aroma*'.format(sub_id))
     aroma_noise.sort()
     
-    acompcor_noise = glob.glob((BAsEPATH + '{0}/confounds/a_comp_cor*'.format(sub_id)))
+    acompcor_noise = glob.glob((BASEPATH + '{0}/confounds/a_comp_cor*'.format(sub_id)))
     acompcor_noise.sort()
     
     #Create lists of data contained in the regressor files
@@ -117,18 +121,18 @@ for subs in part_list:
     F_contrast_retro= contrast_matrix[:contrast_length_retro]
     F_contrast_retro_output = glm_output.compute_contrast([F_contrast_retro], stat_type= 'F')
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_retro_output, BAsEPATH + '{0}/'\
-             'glm1_retro/variance_retro.nii.gz'.format(sub_id))
+    nib.save(F_contrast_retro_output, glm_path + \
+             'glm1_retro/variance_retro.nii.gz')
     #Threshold maps FDR
     thresholded_retro_FDR, threshold_retro_FDR = threshold_stats_img(F_contrast_retro_output, alpha=.05, height_control= 'fdr' )
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_retro_FDR, BAsEPATH + '{0}/'\
-             'glm1_retro/variance_retro_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FDR, glm_path + \
+             'glm1_retro/variance_retro_fdr_corrected.nii.gz')
     
     #Thresholded maps FWE
     thresholded_retro_FWE, threshold_retro_FWE = threshold_stats_img(F_contrast_retro_output, alpha = .05, height_control = 'bonferroni')   
-    nib.save(thresholded_retro_FWE, BAsEPATH + '{0}/'\
-             'glm1_retro/variance_retro_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FWE, glm_path + \
+             'glm1_retro/variance_retro_fwe_corrected.nii.gz')
     
     #GLM aroma
     column_names_glm2 = columns_aroma + column_constant
@@ -142,18 +146,18 @@ for subs in part_list:
     F_contrast_aroma= contrast_matrix[:contrast_length_aroma]
     F_contrast_aroma_output = glm_output.compute_contrast([F_contrast_aroma], stat_type= 'F')
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_aroma_output, BAsEPATH + '{0}/'\
-             'glm2_aroma/variance_aroma.nii.gz'.format(sub_id))
+    nib.save(F_contrast_aroma_output, glm_path + \
+             'glm2_aroma/variance_aroma.nii.gz')
     #Threshold maps FDR
     thresholded_aroma_FDR, threshold_aroma_FDR = threshold_stats_img(F_contrast_aroma_output, alpha=.05, height_control= 'fdr' )
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_aroma_FDR, BAsEPATH + '{0}/'\
-             'glm2_aroma/variance_aroma_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_aroma_FDR, glm_path + \
+             'glm2_aroma/variance_aroma_fdr_corrected.nii.gz')
     
     #Thresholded maps FWE
     thresholded_aroma_FWE, threshold_aroma_FWE = threshold_stats_img(F_contrast_aroma_output, alpha = .05, height_control = 'bonferroni')   
-    nib.save(thresholded_aroma_FWE, BAsEPATH + '{0}/'\
-             'glm2_aroma/variance_aroma_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_aroma_FWE, glm_path + \
+             'glm2_aroma/variance_aroma_fwe_corrected.nii.gz')
     
     #GLM acompcor
     column_names_glm3 = columns_acompcor + column_constant
@@ -168,18 +172,18 @@ for subs in part_list:
     glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm3)
     F_contrast_acompcor_output = glm_output.compute_contrast([F_contrast_acompcor], stat_type= 'F')
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_acompcor_output, BAsEPATH + '{0}/'\
-             'glm3_acompcor/variance_acompcor.nii.gz'.format(sub_id))
+    nib.save(F_contrast_acompcor_output, glm_path + \
+             'glm3_acompcor/variance_acompcor.nii.gz')
     #Threshold maps FDR
     thresholded_acompcor_FDR, threshold_acompcor_FDR = threshold_stats_img(F_contrast_acompcor_output, alpha=.05, height_control= 'fdr' )
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_acompcor_FDR, BAsEPATH + '{0}/'\
-             'glm3_acompcor/variance_acompcor_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_acompcor_FDR, glm_path + \
+             'glm3_acompcor/variance_acompcor_fdr_corrected.nii.gz')
     
     #Thresholded maps FWE
     thresholded_acompcor_FWE, threshold_acompcor_FWE = threshold_stats_img(F_contrast_acompcor_output, alpha = .05, height_control = 'bonferroni')   
-    nib.save(thresholded_acompcor_FWE, BAsEPATH + '{0}/'\
-             'glm3_acompcor/variance_acompcor_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_acompcor_FWE, glm_path + \
+             'glm3_acompcor/variance_acompcor_fwe_corrected.nii.gz')
     
     #GLM acompcor + aroma
     column_names_glm4 = columns_aroma + columns_acompcor + column_constant
@@ -205,12 +209,12 @@ for subs in part_list:
     F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type= 'F')
 
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_aroma_output, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_aroma.nii.gz'.format(sub_id))
-    nib.save(F_contrast_acompcor_output, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_acompcor.nii.gz'.format(sub_id))
-    nib.save(F_contrast_shared, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/shared_variance_aroma_acompcor.nii.gz'.format(sub_id))
+    nib.save(F_contrast_aroma_output, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_aroma.nii.gz')
+    nib.save(F_contrast_acompcor_output, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_acompcor.nii.gz')
+    nib.save(F_contrast_shared, glm_path + \
+             'glm4_aroma_acompcor/shared_variance_aroma_acompcor.nii.gz')
 
     #Threshold maps FDR
     thresholded_aroma_FDR, threshold_aroma_FDR = threshold_stats_img(F_contrast_aroma_output, alpha=.05, height_control= 'fdr' )
@@ -218,12 +222,12 @@ for subs in part_list:
     thresholded_shared_FDR, threshold_shared_FDR = threshold_stats_img(F_contrast_shared, alpha=.05, height_control= 'fdr' )
         
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_aroma_FDR, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_aroma_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_acompcor_FDR, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_acompcor_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FDR, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/shared_variance_aroma_acompcor_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_aroma_FDR, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_aroma_fdr_corrected.nii.gz')
+    nib.save(thresholded_acompcor_FDR, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_acompcor_fdr_corrected.nii.gz')
+    nib.save(thresholded_shared_FDR, glm_path + \
+             'glm4_aroma_acompcor/shared_variance_aroma_acompcor_fdr_corrected.nii.gz')
         
     #Thresholded maps FWE
     thresholded_aroma_FWE, threshold_aroma_FWE = threshold_stats_img(F_contrast_aroma_output, alpha = .05, height_control = 'bonferroni')
@@ -231,12 +235,12 @@ for subs in part_list:
     thresholded_shared_FWE, threshold_shared_FWE = threshold_stats_img(F_contrast_shared, alpha = .05, height_control = 'bonferroni')
 
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_aroma_FWE, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_aroma_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_acompcor_FWE, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/unique_variance_acompcor_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FWE, BAsEPATH + '{0}/'\
-             'glm4_aroma_acompcor/shared_variance_aroma_acompcor_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_aroma_FWE, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_aroma_fwe_corrected.nii.gz')
+    nib.save(thresholded_acompcor_FWE, glm_path + \
+             'glm4_aroma_acompcor/unique_variance_acompcor_fwe_corrected.nii.gz')
+    nib.save(thresholded_shared_FWE, glm_path + \
+             'glm4_aroma_acompcor/shared_variance_aroma_acompcor_fwe_corrected.nii.gz')
             
         
     #GLM retroICOR on top of aroma
@@ -260,12 +264,12 @@ for subs in part_list:
     F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type= 'F')
     
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_retro_output, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_retro.nii.gz'.format(sub_id))
-    nib.save(F_contrast_aroma_output, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_aroma.nii.gz'.format(sub_id))
-    nib.save(F_contrast_shared, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/shared_variance_aroma_retro.nii.gz'.format(sub_id))
+    nib.save(F_contrast_retro_output, glm_path + \
+             'glm5_retro_aroma/unique_variance_retro.nii.gz')
+    nib.save(F_contrast_aroma_output, glm_path + \
+             'glm5_retro_aroma/unique_variance_aroma.nii.gz')
+    nib.save(F_contrast_shared, glm_path + \
+             'glm5_retro_aroma/shared_variance_aroma_retro.nii.gz')
                                                            
     #Threshold maps FDR
     thresholded_retro_FDR, threshold_retro_FDR = threshold_stats_img(F_contrast_retro_output, alpha=.05, height_control= 'fdr' )
@@ -273,12 +277,12 @@ for subs in part_list:
     thresholded_shared_FDR, threshold_shared_FDR = threshold_stats_img(F_contrast_shared, alpha=.05, height_control= 'fdr' )
 
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_retro_FDR, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_retro_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_aroma_FDR, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_aroma_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FDR, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/shared_variance_aroma_retro_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FDR, glm_path + \
+             'glm5_retro_aroma/unique_variance_retro_fdr_corrected.nii.gz')
+    nib.save(thresholded_aroma_FDR, glm_path + \
+             'glm5_retro_aroma/unique_variance_aroma_fdr_corrected.nii.gz')
+    nib.save(thresholded_shared_FDR, glm_path + \
+             'glm5_retro_aroma/shared_variance_aroma_retro_fdr_corrected.nii.gz')
                                                            
     #Thresholded maps FWE
     thresholded_retro_FWE, threshold_retro_FWE = threshold_stats_img(F_contrast_retro_output, alpha = .05, height_control = 'bonferroni')
@@ -286,12 +290,12 @@ for subs in part_list:
     thresholded_shared_FWE, threshold_shared_FWE = threshold_stats_img(F_contrast_shared, alpha = .05, height_control = 'bonferroni')
 
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_retro_FWE, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_retro_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_aroma_FWE, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/unique_variance_aroma_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FWE, BAsEPATH + '{0}/'\
-             'glm5_retro_aroma/shared_variance_aroma_retro_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FWE, glm_path + \
+             'glm5_retro_aroma/unique_variance_retro_fwe_corrected.nii.gz')
+    nib.save(thresholded_aroma_FWE, glm_path + \
+             'glm5_retro_aroma/unique_variance_aroma_fwe_corrected.nii.gz')
+    nib.save(thresholded_shared_FWE, glm_path + \
+             'glm5_retro_aroma/shared_variance_aroma_retro_fwe_corrected.nii.gz')
         
         
         
@@ -321,14 +325,14 @@ for subs in part_list:
     F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type= 'F')
     
     #save resulting z-maps (unthresholded)
-    nib.save(F_contrast_retro_output, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_retro.nii.gz'.format(sub_id))
-    nib.save(F_contrast_aroma_output, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_aroma.nii.gz'.format(sub_id))
-    nib.save(F_contrast_acompcor_output, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_acompcor.nii.gz'.format(sub_id))
-    nib.save(F_contrast_shared, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_acompcor.nii.gz'.format(sub_id))
+    nib.save(F_contrast_retro_output, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_retro.nii.gz')
+    nib.save(F_contrast_aroma_output, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_aroma.nii.gz')
+    nib.save(F_contrast_acompcor_output, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_acompcor.nii.gz')
+    nib.save(F_contrast_shared, glm_path + \
+             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_acompcor.nii.gz')
     
                                                        
     #Threshold maps FDR
@@ -338,14 +342,14 @@ for subs in part_list:
     thresholded_shared_FDR, threshold_shared_FDR = threshold_stats_img(F_contrast_shared, alpha=.05, height_control= 'fdr' )
 
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_retro_FDR, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_retro_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_aroma_FDR, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_aroma_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_acompcor_FDR, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_acompcor_fdr_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FDR, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_acompcor_fdr_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FDR, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_retro_fdr_corrected.nii.gz')
+    nib.save(thresholded_aroma_FDR, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_aroma_fdr_corrected.nii.gz')
+    nib.save(thresholded_acompcor_FDR, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_acompcor_fdr_corrected.nii.gz')
+    nib.save(thresholded_shared_FDR, glm_path + \
+             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_acompcor_fdr_corrected.nii.gz')
                                                            
     #Thresholded maps FWE
     thresholded_retro_FWE, threshold_retro_FWE = threshold_stats_img(F_contrast_retro_output, alpha = .05, height_control = 'bonferroni')
@@ -354,12 +358,12 @@ for subs in part_list:
     thresholded_shared_FWE, threshold_shared_FWE = threshold_stats_img(F_contrast_shared, alpha = .05, height_control = 'bonferroni')
 
     #save resulting z-maps (unthresholded)
-    nib.save(thresholded_retro_FWE, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_retro_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_aroma_FWE, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_aroma_fwe_corrected.nii.gz'.format(sub_id))    
-    nib.save(thresholded_acompcor_FWE, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/unique_variance_acompcor_fwe_corrected.nii.gz'.format(sub_id))
-    nib.save(thresholded_shared_FWE, BAsEPATH + '{0}/'\
-             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_fwe_corrected.nii.gz'.format(sub_id))
+    nib.save(thresholded_retro_FWE, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_retro_fwe_corrected.nii.gz')
+    nib.save(thresholded_aroma_FWE, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_aroma_fwe_corrected.nii.gz')    
+    nib.save(thresholded_acompcor_FWE, glm_path + \
+             'glm6_retro_aroma_acompcor/unique_variance_acompcor_fwe_corrected.nii.gz')
+    nib.save(thresholded_shared_FWE, glm_path + \
+             'glm6_retro_aroma_acompcor/shared_variance_aroma_retro_fwe_corrected.nii.gz')
     
