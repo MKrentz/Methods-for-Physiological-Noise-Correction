@@ -15,99 +15,62 @@ import glob
 from nilearn import plotting
 import matplotlib.pyplot as plt
 
-BASEPATH = '/project/3013068.03/RETROICOR/Example_Visualisation/'
+#Set general path to GLM folder
+BASEPATH = '/project/3013068.03/test/GLM_approach/'
 
-# Load FWE-thresholded z-maps for unique variance of RETRO
-zmaps_RETRO = glob.glob(BASEPATH + 'sub-*'
-                        '/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.nii.gz')
-zmaps_RETRO.sort()
+#Source all subjects within the folder
+part_list = glob.glob(BASEPATH + 'sub-*')
+part_list.sort() 
 
-# Load FWE-thresholded z-maps for unique variance of AROMA
-zmaps_AROMA = glob.glob(BASEPATH + 'sub-*'
-                        '/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.nii.gz')
-zmaps_AROMA.sort()
-
-# Load FWE-thresholded z-maps for shared variance of AROMA and RETROICOR
-zmaps_shared = glob.glob(BASEPATH + 'sub-*'
-                        '/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.nii.gz')
-zmaps_shared.sort()
-
-
-if len(zmaps_RETRO) != len(zmaps_AROMA) or len(zmaps_RETRO) != len(zmaps_shared):
-    print('Not all processed images are present in the dataset!')
+#Loop over subjects
+for subs in part_list:
+    #Create a glassbrain-graph per subject for each GLM contrast in each of the 6GLMs
+    try:
+        sub_id = subs[-7:]
+        sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
+        zmaps_total = glob.glob(sub_path + 'glm*/*.nii.gz')
+        
+        for zmap_counter, subject_zmap in enumerate(zmaps_total):
+            plotting.plot_glass_brain(subject_zmap,
+                                      colorbar = True,
+                                      threshold = None,
+                                      title = sub_id + zmaps_total[zmap_counter][zmaps_total[zmap_counter].rfind('/')+1:-7],
+                                      output_file = sub_path + zmaps_total[zmap_counter][zmaps_total[zmap_counter].rfind('glm'):-7] + '.png',
+                                      plot_abs = False)
+            plt.close()
     
-for subject_zmap in zmaps_RETRO:
-    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-') + 7]
-    plotting.plot_glass_brain(subject_zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id + ': Unique Variance of RETROICOR',
-                              output_file = BASEPATH + '{0}/RETRO_vs_AROMA_revised/Unique_Variance_RETRO_fwe_corrected.png'.format(subject_id),
-                              plot_abs = False)
+    #In case not all subjects have been processed in GLM_02_run 
+    except:
+        print('{} does not have calculated Z-Maps'.format(sub_id))
+        continue
+
+#Create a list of all GLM contrasts across subjects
+approaches = []
+for subs in part_list:
+    sub_id = subs[-7:]
+    sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
+    zmaps_fdr = glob.glob(sub_path + '*/*fdr_corrected.nii.gz')
+    if approaches == []:
+        for count,x in enumerate(zmaps_fdr):
+                approaches.append([x])
+    else:
+        for count,x in enumerate(zmaps_fdr):
+            approaches[count].append(x)
+        
+
+#Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM
+for approach_counter, approach in enumerate(approaches):
+    fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
+    for cidx, zmap in enumerate(approach): 
+        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
+        print(subject_id)
+        plotting.plot_glass_brain(zmap,
+                                  colorbar = True,
+                                  threshold = None,
+                                  title = subject_id,
+                                  axes = axes[int(cidx / 3), int(cidx % 3)],
+                                  annotate = False,
+                                  plot_abs = False)
+    plt.savefig(BASEPATH + approaches[approach_counter][0][approaches[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()
 
-for subject_zmap in zmaps_AROMA:
-    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-') + 7]
-    plotting.plot_glass_brain(subject_zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id + ': Unique Variance of RETROICOR',
-                              output_file = BASEPATH + '{0}/RETRO_vs_AROMA_revised/Unique_Variance_AROMA_fwe_corrected.png'.format(subject_id),
-                              plot_abs = False)
-    plt.close()
-
-for subject_zmap in zmaps_shared:
-    subject_id = subject_zmap[subject_zmap.find('sub-'):subject_zmap.find('sub-') + 7]
-    plotting.plot_glass_brain(subject_zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id + ': Unique Variance of RETROICOR',
-                              output_file = BASEPATH + '{0}/RETRO_vs_AROMA_revised/Shared_Variance_AROMA_RETRO_fwe_corrected.png'.format(subject_id),
-                              plot_abs = False)
-    plt.close()
-    
-    
-    
-#Overall plotting of z-maps for RETRO unique variance
-fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
-for cidx, zmap in enumerate(zmaps_RETRO): 
-    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
-    plotting.plot_glass_brain(zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id,
-                              axes = axes[int(cidx / 3), int(cidx % 3)],
-                              annotate = False,
-                              plot_abs = False)
-
-plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_unqique_RETRO.png')
-plt.close()
-
-#Overall plotting of z-maps for AROMA unique variance
-fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
-for cidx, zmap in enumerate(zmaps_AROMA):
-    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') + 7]
-    plotting.plot_glass_brain(zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id,
-                              axes=axes[int(cidx / 3), int(cidx % 3)],
-                              annotate = False,
-                              plot_abs = False)
-
-plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_unique_AROMA.png')
-plt.close()
-
-#Overall plotting of z-maps for RETRO and AROMA shared variance
-fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
-for cidx, zmap in enumerate(zmaps_shared): 
-    subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') + 7]
-    plotting.plot_glass_brain(zmap,
-                              colorbar = True,
-                              threshold = None,
-                              title = subject_id,
-                              axes = axes[int(cidx / 3), int(cidx % 3)],
-                              annotate = False,
-                              plot_abs = False)
-plt.savefig('/project/3013068.03/RETROICOR/z_map_collection_shared.png')
-plt.close()

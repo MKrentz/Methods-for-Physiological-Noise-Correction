@@ -24,7 +24,7 @@ BASEPATH = '/project/3013068.03/test/GLM_approach/'
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
 
-part_list = [part_list[0]]
+#part_list = [part_list[0]]
 
 # Indicating subject having the 'stress' condition during their FIRsT functional session
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
