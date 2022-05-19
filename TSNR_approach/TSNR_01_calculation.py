@@ -368,7 +368,7 @@ for subject in part_list:
         
         
         mask_list = [masked_tsnr_uncleaned, masked_tsnr_retro, masked_tsnr_aroma, masked_tsnr_acompcor, masked_tsnr_aroma_retro, masked_tsnr_aroma_acompcor, masked_tsnr_aroma_retro_acompcor,
-                     unique_tsnr_aroma_to_retro, unique_tsnr_retro_to_aroma, unique_tsnr_acompcor_to_aroma, unique_tsnr_retro_to_aroma_acompcor, difference_aroma_to_uncleaned,
+                     unique_tsnr_retro_to_aroma, unique_tsnr_aroma_to_retro,  unique_tsnr_acompcor_to_aroma, unique_tsnr_retro_to_aroma_acompcor, difference_aroma_to_uncleaned,
                      difference_aroma_retro_to_uncleaned, difference_retro_uncleaned,
                      difference_percent_retro_to_uncleaned, difference_percent_aroma_to_uncleaned, difference_percent_acompcor_to_uncleaned, difference_percent_unique_tsnr_aroma_to_retro,
                      difference_percent_unique_tsnr_retro_to_aroma, difference_percent_unique_tsnr_acompcor_to_aroma, difference_percent_unique_tsnr_retro_to_aroma_acompcor]
@@ -399,7 +399,7 @@ for subject in part_list:
             tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI = difference_percent_unique_tsnr_retro_to_aroma_acompcor[:, :, :, np.newaxis] 
             
             output_list = [tsnr_noclean_MNI, tsnr_retro_MNI, tsnr_aroma_MNI, tsnr_acompcor_MNI, tsnr_aroma_retro_MNI, tsnr_aroma_acompcor_MNI, 
-                           tsnr_aroma_retro_acompcor_MNI, tsnr_unique_aroma_to_retro_MNI, tsnr_unique_acompcor_to_aroma_MNI,tsnr_unique_retro_to_aroma_acompcor_MNI,
+                           tsnr_aroma_retro_acompcor_MNI, tsnr_unique_retro_to_aroma_MNI, tsnr_unique_aroma_to_retro_MNI, tsnr_unique_acompcor_to_aroma_MNI,tsnr_unique_retro_to_aroma_acompcor_MNI,
                            tsnr_difference_aroma_to_uncleaned_MNI,
                            tsnr_difference_aroma_retro_to_uncleaned_MNI, tsnr_difference_retro_to_uncleaned_MNI,
                            tsnr_difference_percent_retro_to_uncleaned_MNI,
@@ -410,7 +410,7 @@ for subject in part_list:
             for output_counter, output in enumerate(output_list):
                 output_list[output_counter] = np.concatenate((output, mask_list[output_counter][:, :, :, np.newaxis]), axis = 3)
 
-    output_list_names = ['tsnr_noclean_MNI', 'tsnr_retro_MNI', 'tsnr_aroma_MNI', 'tsnr_acompcor_MNI', 'tsnr_aroma_retro_MNI', 'tsnr_aroma_acompcor_MNI', 'tsnr_aroma_retro_acompcor_MNI',
+    output_list_names = ['tsnr_noclean_MNI', 'tsnr_retro_MNI', 'tsnr_aroma_MNI', 'tsnr_acompcor_MNI', 'tsnr_aroma_retro_MNI', 'tsnr_aroma_acompcor_MNI', 'tsnr_aroma_retro_acompcor_MNI', 'tsnr_difference_unique_retro_to_aroma_MNI',
     'tsnr_difference_unique_aroma_to_retro_MNI', 'tsnr_difference_unique_acompcor_to_aroma_MNI','tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
     'tsnr_difference_aroma_to_uncleaned_MNI',
     'tsnr_difference_aroma_retro_to_uncleaned_MNI', 'tsnr_difference_retro_to_uncleaned_MNI',
@@ -420,7 +420,7 @@ for subject in part_list:
 
 
 for output_counter, output in enumerate(output_list):
-    nib.save(nib.Nifti2Image(np.mean(output, axis = 3), affine = func_data.affine, header = func_data.header), SAVEPATH + 'Overall_{0}.nii.gz'.format(output_list_names[output_counter]))
+    nib.save(nib.Nifti2Image(np.mean(output, axis = 3), affine = func_data_mni.affine, header = func_data.header), SAVEPATH + 'Overall_{0}.nii.gz'.format(output_list_names[output_counter]))
 
 with open(BASEPATH + 'seed_dict.txt', 'w') as f:
     print(seed_dict, file=f)
