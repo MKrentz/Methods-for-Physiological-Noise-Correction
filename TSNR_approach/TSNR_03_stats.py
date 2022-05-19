@@ -6,6 +6,8 @@ This still contains a problem with the lack of Subject-008s LC mask. Currently i
 @author: markre
 """
 
+
+
 import numpy as np
 import nibabel as nib
 import glob
@@ -15,7 +17,7 @@ from nilearn.datasets import load_mni152_brain_mask
 from nilearn.image import resample_to_img
 import pandas as pd
 
-BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
+BASEPATH = '/project/3013068.03/test/TSNR_approach/'
 
 MNI_mask = load_mni152_brain_mask()
 
@@ -32,17 +34,21 @@ part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
 
 # Planned comparisons
-var_names_MNI = ['TSNR_noclean_MNI', 'TSNR_RETRO_MNI', 'TSNR_aggrAROMA_MNI', 'TSNR_difference_aggrAROMA_uncleaned_MNI',
-                 'TSNR_difference_RETRO_uncleaned_MNI',
-                 'TSNR_difference_RETRO_aggrAROMA_MNI', 'TSNR_difference_aggrAROMARETRO_RETRO_MNI',
-                 'TSNR_difference_aggrAROMARETRO_aggrAROMA_MNI',
-                 'TSNR_difference_aggrAROMARETRO_uncleaned_MNI']
+var_names_MNI = ['tsnr_noclean_MNI', 'tsnr_retro_MNI', 'tsnr_aroma_MNI', 'tsnr_acompcor_MNI', 'tsnr_aroma_retro_MNI', 'tsnr_aroma_acompcor_MNI', 'tsnr_aroma_retro_acompcor_MNI',
+    'tsnr_difference_unique_aroma_to_retro_MNI', 'tsnr_difference_unique_acompcor_to_aroma_MNI','tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
+    'tsnr_difference_aroma_to_uncleaned_MNI',
+    'tsnr_difference_aroma_retro_to_uncleaned_MNI', 'tsnr_difference_retro_to_uncleaned_MNI',
+    'tsnr_difference_percent_retro_to_uncleaned_MNI',
+    'tsnr_difference_percent_aroma_to_uncleaned_MNI', 'tsnr_difference_percent_acompcor_to_uncleaned_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_MNI' ,'tsnr_difference_percent_unique_retro_to_aroma_MNI', 
+    'tsnr_difference_percent_unique_acompcor_to_aroma_MNI', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI']
 
-var_names_native = ['TSNR_noclean_native', 'TSNR_RETRO_native', 'TSNR_aggrAROMA_native', 'TSNR_difference_aggrAROMA_uncleaned_native',
-                 'TSNR_difference_RETRO_uncleaned_native',
-                 'TSNR_difference_RETRO_aggrAROMA_native', 'TSNR_difference_aggrAROMARETRO_RETRO_native',
-                 'TSNR_difference_aggrAROMARETRO_aggrAROMA_native',
-                 'TSNR_difference_aggrAROMARETRO_uncleaned_native']
+var_names_native =  ['tsnr_noclean_native', 'tsnr_retro_native', 'tsnr_aroma_native', 'tsnr_acompcor_native', 'tsnr_aroma_retro_native', 'tsnr_aroma_acompcor_native', 'tsnr_aroma_retro_acompcor_native',
+    'tsnr_difference_unique_aroma_to_retro_native', 'tsnr_difference_unique_acompcor_to_aroma_native','tsnr_difference_unique_retro_to_aroma_acompcor_native',
+    'tsnr_difference_aroma_to_uncleaned_native',
+    'tsnr_difference_aroma_retro_to_uncleaned_native', 'tsnr_difference_retro_to_uncleaned_native',
+    'tsnr_difference_percent_retro_to_uncleaned_native',
+    'tsnr_difference_percent_aroma_to_uncleaned_native', 'tsnr_difference_percent_acompcor_to_uncleaned_native', 'tsnr_difference_percent_unique_aroma_to_retro_native' ,'tsnr_difference_percent_unique_retro_to_aroma_native', 
+    'tsnr_difference_percent_unique_acompcor_to_aroma_native', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_native']
 
 # Create object dictionary
 objects_MNI = dict.fromkeys(var_names_MNI)
@@ -73,39 +79,39 @@ for subject_path in part_list:
     # Account for first subject difference
     if sub_id == part_list[0][-7:]:
         for keys, values in objects_MNI.items():
-            objects_MNI[keys] = nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :,
+            objects_MNI[keys] = nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata()[:, :, :,
                             np.newaxis]
 
         for keys, values in objects_brainstem.items():
-            objects_brainstem[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
+            objects_brainstem[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
 
         for keys, values in objects_native.items():
-            objects_native[keys] = [nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()]
+            objects_native[keys] = [nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata()]
 
         if LC_mask != None:
             for keys, values in objects_LC.items():
-                objects_LC[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
+                objects_LC[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
 
         for keys, values in objects_gm.items():
-            objects_gm[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
+            objects_gm[keys] = [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
 
     else:
         for keys, values in objects_MNI.items():
             objects_MNI[keys] = np.concatenate(
-                (values, nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()[:, :, :, np.newaxis]),
+                (values, nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata()[:, :, :, np.newaxis]),
                 axis=3)
         for keys, values in objects_brainstem.items():
-            objects_brainstem[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
+            objects_brainstem[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=brainstem_mat)]
 
         for keys, values in objects_native.items():
-            objects_native[keys] = values + [nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata()]
+            objects_native[keys] = values + [nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata()]
 
         for keys, values in objects_gm.items():
-            objects_gm[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
+            objects_gm[keys] = values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=gm_mask_mat)]
 
         if LC_mask != None:
             for keys, values in objects_LC.items():
-                objects_LC[keys]= values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
+                objects_LC[keys]= values + [np.ma.array(nib.load(glob.glob(BASEPATH + sub_id + '/glms/' + keys + '*')[0]).get_fdata(), mask=LC_mask_mat)]
 
 
 # Mean Matrices for MNI template
@@ -114,9 +120,11 @@ mean_MNI_value = dict.fromkeys(var_names_MNI)
 for keys, values in mean_MNI_matrix.items():
     mean_MNI_value[keys] = np.mean(values, axis=(0,1,2))
 mean_MNI_value_df = pd.DataFrame(mean_MNI_value)
-mean_MNI_value_df['percent_increase_RETRO'] = ((mean_MNI_value_df['TSNR_RETRO_MNI'] / mean_MNI_value_df['TSNR_noclean_MNI']) - 1) * 100
-mean_MNI_value_df['percent_increase_AROMA'] = ((mean_MNI_value_df['TSNR_aggrAROMA_MNI'] / mean_MNI_value_df['TSNR_noclean_MNI']) - 1) * 100
-mean_MNI_value_df['mean_average_RETROAROMA'] = (mean_MNI_value_df['percent_increase_RETRO']+mean_MNI_value_df['percent_increase_AROMA']) / 2
+mean_MNI_value_df['percent_increase_RETRO'] = mean_MNI_value_df['tsnr_percent_retro_uncleaned_MNI']
+mean_MNI_value_df['percent_increase_AROMA'] = ((mean_MNI_value_df['tsnr_percent_aroma_uncleaned_MNI']
+mean_MNI_value_df['percent_increase_aCompCor'] = mean_MNI_value_df['tsnr_percent_acompcor_uncleaned_MNI'] 
+
+mean_MNI_value_df['mean_average_RETROAROMA'] = (mean_MNI_value_df['percent_increase_RETRO'] + mean_MNI_value_df['percent_increase_AROMA']) / 2
 mean_MNI_value_df['percent_increase_RETRO_mean_scaled'] = mean_MNI_value_df['percent_increase_RETRO'] + mean_MNI_value_df['mean_average_RETROAROMA'] - np.mean(mean_MNI_value_df['percent_increase_RETRO'])
 mean_MNI_value_df['percent_increase_AROMA_mean_scaled'] = mean_MNI_value_df['percent_increase_AROMA'] + mean_MNI_value_df['mean_average_RETROAROMA'] - np.mean(mean_MNI_value_df['percent_increase_AROMA'])
 
