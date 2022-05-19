@@ -321,7 +321,7 @@ for subs in part_list:
     #Compute contrasts (for the shared contrast the choice of GLM is redundant)
     F_contrast_retro_output = glm_output.compute_contrast([F_contrast_retro_unique], stat_type= 'F')
     F_contrast_aroma_output = glm_output.compute_contrast([F_contrast_aroma_unique], stat_type= 'F')
-    F_contrast_acompcor_output = glm_output.compute_contrast([F_contrast_aroma_unique], stat_type= 'F')
+    F_contrast_acompcor_output = glm_output.compute_contrast([F_contrast_acompcor_unique], stat_type= 'F')
     F_contrast_shared = glm_output.compute_contrast([F_contrast_shared], stat_type= 'F')
     
     #save resulting z-maps (unthresholded)
