@@ -13,11 +13,15 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import glob
 
-BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
+BASEPATH = '/project/3013068.03/test/TSNR_approach/'
+
+output_names = ['RETROICOR Cleaned', 'AROMA Cleaned', 'aCompCor Cleaned', 'Unique aCompCor Effect to AROMA', 'Unique RETROICOR Effect to AROMA', 'Unique RETROICOR Effect to AROMA and aCompCor',
+                'Percent RETROICOR Effect', 'Percent AROMA Effect', 'Percent aCompCor Effect', 'Percent RETROICOR Effect vs AROMA', 'Percent RETROICOR Effect vs AROMA and aCompCor']
 
 NEW_COLUMN_NAMES = ['Index', 'TSNR_noclean', 'TSNR_RETRO',
-       'TSNR_aggrAROMA', 'TSNR_difference_aggrAROMA_uncleaned',
-       'TSNR_difference_RETRO_uncleaned',
+       'TSNR_AROMA', 'TSNR_difference_AROMA_to_uncleaned',
+       'TSNR_difference_RETRO_to_uncleaned',
+       'TSNR_difference_aCompCor_to_uncleaned',
        'TSNR_difference_RETRO_aggrAROMA',
        'TSNR_difference_aggrAROMARETRO_RETRO',
        'TSNR_difference_aggrAROMARETRO_aggrAROMA',
@@ -29,42 +33,49 @@ NEW_COLUMN_NAMES = ['Index', 'TSNR_noclean', 'TSNR_RETRO',
                     'percent_increase_AROMA_mean_scaled'
                     ]
 
-
 #Create a dataframe calculating mean and confidence intervals for the full-brain TSNR map
-mean_MNI_value_df = pd.read_csv(BASEPATH + 'MNI_means.txt')
-mean_MNI_value_df.columns = NEW_COLUMN_NAMES
-MNI_plotting_df = pd.DataFrame(columns=NEW_COLUMN_NAMES[1:], index=['Mean', 'Confidence Interval'])
-for column_counter, column in enumerate(mean_MNI_value_df.columns[1:]):
+mean_MNI_value_df = pd.read_csv(BASEPATH + 'MNI_means.txt', index_col = 0)
+new_column_names = [None]*len(mean_MNI_value_df.columns)
+for counter, columns in enumerate(mean_MNI_value_df.columns):
+    new_column_names[counter] = columns.replace('_MNI', '')
+mean_MNI_value_df.columns = new_column_names
+
+MNI_plotting_df = pd.DataFrame(columns=mean_MNI_value_df.columns, index = ['Mean', 'Confidence Interval'])
+for column_counter, column in enumerate(mean_MNI_value_df.columns):
     mean, sigma = np.mean(mean_MNI_value_df[column]), np.std(mean_MNI_value_df[column])
     confidence_interval = stats.norm.interval(0.95, loc=mean, scale=sigma/np.sqrt(len(mean_MNI_value_df[column])))
     confidence_interval = confidence_interval[1] - mean
     MNI_plotting_df[column][0], MNI_plotting_df[column][1] = mean, confidence_interval
 
 #Create a dataframe calculating mean and confidence intervals for the cortex gray-matter TSNR map
-mean_gm_value_df = pd.read_csv(BASEPATH + 'graymatter_means.txt')
-mean_gm_value_df.columns = NEW_COLUMN_NAMES
-gm_plotting_df = pd.DataFrame(columns=NEW_COLUMN_NAMES[1:], index=['Mean', 'Confidence Interval'])
-for column_counter, column in enumerate(mean_gm_value_df.columns[1:]):
+mean_gm_value_df = pd.read_csv(BASEPATH + 'graymatter_means.txt', index_col = 0)
+mean_gm_value_df.columns = new_column_names
+gm_plotting_df = pd.DataFrame(columns = mean_gm_value_df.columns, index = ['Mean', 'Confidence Interval'])
+for column_counter, column in enumerate(mean_gm_value_df.columns):
     mean, sigma = np.mean(mean_gm_value_df[column]), np.std(mean_gm_value_df[column])
     confidence_interval = stats.norm.interval(0.95, loc=mean, scale=sigma/np.sqrt(len(mean_gm_value_df[column])))
     confidence_interval = confidence_interval[1] - mean
     gm_plotting_df[column][0], gm_plotting_df[column][1] = mean, confidence_interval
 
 #Create a dataframe calculating mean and confidence intervals for the brainstem TSNR map
-mean_brainstem_value_df = pd.read_csv(BASEPATH + 'brainstem_means.txt')
-mean_brainstem_value_df.columns = NEW_COLUMN_NAMES
-brainstem_plotting_df = pd.DataFrame(columns=NEW_COLUMN_NAMES[1:], index=['Mean', 'Confidence Interval'])
-for column_counter, column in enumerate(mean_brainstem_value_df.columns[1:]):
+mean_brainstem_value_df = pd.read_csv(BASEPATH + 'brainstem_means.txt', index_col = 0)
+new_column_names = [None]*len(mean_brainstem_value_df.columns)
+for counter, columns in enumerate(mean_brainstem_value_df.columns):
+    new_column_names[counter] = columns.replace('_native', '')
+mean_brainstem_value_df.columns = new_column_names
+
+brainstem_plotting_df = pd.DataFrame(columns = mean_brainstem_value_df.columns, index = ['Mean', 'Confidence Interval'])
+for column_counter, column in enumerate(mean_brainstem_value_df.columns):
     mean, sigma = np.mean(mean_brainstem_value_df[column]), np.std(mean_brainstem_value_df[column])
     confidence_interval = stats.norm.interval(0.95, loc=mean, scale=sigma/np.sqrt(len(mean_brainstem_value_df[column])))
     confidence_interval = confidence_interval[1] - mean
     brainstem_plotting_df[column][0], brainstem_plotting_df[column][1] = mean, confidence_interval
 
 #Create a dataframe calculating mean and confidence intervals for the LC TSNR map
-mean_LC_value_df = pd.read_csv(BASEPATH + 'LC_means.txt')
-mean_LC_value_df.columns = NEW_COLUMN_NAMES
-LC_plotting_df = pd.DataFrame(columns=NEW_COLUMN_NAMES[1:], index=['Mean', 'Confidence Interval'])
-for column_counter, column in enumerate(mean_LC_value_df.columns[1:]):
+mean_LC_value_df = pd.read_csv(BASEPATH + 'LC_means.txt', index_col = 0)
+mean_LC_value_df.columns = new_column_names
+LC_plotting_df = pd.DataFrame(columns = mean_LC_value_df.columns, index = ['Mean', 'Confidence Interval'])
+for column_counter, column in enumerate(mean_LC_value_df.columns):
     mean, sigma = np.mean(mean_LC_value_df[column]), np.std(mean_LC_value_df[column])
     confidence_interval = stats.norm.interval(0.95, loc=mean, scale=sigma/np.sqrt(len(mean_LC_value_df[column])))
     confidence_interval = confidence_interval[1] - mean
@@ -82,31 +93,29 @@ for keys, values in df_dic.items():
 
     fig = plt.figure()
     ax1 = fig.add_subplot(121)
-    colors = ['dimgray','whitesmoke']
+    colors = ['black', 'dimgray','whitesmoke']
 
     bar_width = 0.5
-    bars_main_effect = ('RETROICOR', 'AROMA')
-    bars2_difference_effect = ('RETROICOR', 'AROMA')
+    bars_main_effect = ('RETROICOR', 'AROMA', 'aCompCor')
+    bars2_difference_effect = ('RETROICOR', 'AROMA', 'aCompCor')
 
-    y_pos1 = [0.6, 1.2]
-    y_pos2 = [0.6, 1.2]
+    y_pos1 = [0.6, 1.2, 1.8]
     plt.ylim(0,80)
+    
     bars = ax1.bar(y_pos1,
-                  height = [values['percent_increase_RETRO'][0], values['percent_increase_AROMA'][0]],
-                  yerr = [values['percent_increase_RETRO_mean_scaled'][1], values['percent_increase_AROMA_mean_scaled'][1]],
+                  height = [values.iloc['tsnr_difference_percent_retro_to_uncleaned_MNI'][0], values['tsnr_difference_percent_aroma_to_uncleaned_MNI'][0], 
+                            values['tsnr_difference_percent_acompcor_to_uncleaned_MNI'][0]],
+                  yerr = [values['tsnr_difference_percent_retro_to_uncleaned_MNI'][1], values['tsnr_difference_percent_aroma_to_uncleaned_MNI'][1], 
+                            values['tsnr_difference_percent_acompcor_to_uncleaned_MNI'][1]],
                   width = bar_width,
                   capsize = 5,
-                   edgecolor = 'black',
-                   color = ['dimgray', 'whitesmoke'])
-
-    #for bar, pattern in zip(bars, colors):
-    #    bar.set_color(pattern)
-     #   bar.set_edgecolor = 'black'
+                  edgecolor = 'black',
+                  color = colors)
 
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
     plt.xticks(y_pos1, bars_main_effect, rotation = -45)
-    plt.title('Mean TSNR', size = 11, y = 1.1)
+    plt.title('Percent TSNR Improvement', size = 11, y = 1.1)
 
     ax2 = fig.add_subplot(122)
     bars2 = ax2.bar(y_pos2,
