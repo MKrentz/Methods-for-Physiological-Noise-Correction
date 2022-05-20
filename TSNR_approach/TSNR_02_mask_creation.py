@@ -4,7 +4,7 @@ from nilearn.image import resample_to_img
 import glob
 import numpy as np
 
-BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
+BASEPATH = '/project/3013068.03/test/TSNR_approach/'
 
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
@@ -26,7 +26,7 @@ for subject_path in part_list:
         LC_mask_native = resample_to_img(LC_mask, sub_func, interpolation='nearest')
         LC_mask_mat = LC_mask_native.get_fdata()
         LC_mask_mat = np.where((LC_mask_mat == 0) | (LC_mask_mat == 1), 1 - LC_mask_mat, LC_mask_mat)
-        LC_mask_nii = nib.save(nib.Nifti2Image(LC_mask_mat, LC_mask.affine, LC_mask.header), BASEPATH + '{0}/LC_mask_native.nii.gz'.format(sub_id))
+        LC_mask_nii = nib.save(nib.Nifti2Image(LC_mask_mat, LC_mask.affine, LC_mask.header), BASEPATH + '{0}/masks/LC_mask_native.nii.gz'.format(sub_id))
 
     except:
         print('No LC mask for {}'.format(sub_id))
@@ -37,4 +37,4 @@ for subject_path in part_list:
     gm_mask_mat[gm_mask_mat < 1000], gm_mask_mat[gm_mask_mat >= 1000] = 1, 0
     gm_mask_native = nib.Nifti2Image(gm_mask_mat, gm_mask.affine, gm_mask.header)
     gm_mask_native = resample_to_img(gm_mask_native, sub_func, interpolation='nearest')
-    nib.save(gm_mask_native, BASEPATH + '{0}/gm_mask_native.nii.gz'.format(sub_id))
+    nib.save(gm_mask_native, BASEPATH + '{0}/masks/gm_mask_native.nii.gz'.format(sub_id))
