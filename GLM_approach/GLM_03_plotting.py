@@ -68,8 +68,8 @@ for subs in part_list:
 
 #Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM\
 
-vmin_list = []
-vmax_list = []
+
+vmax_list = [25, 35, 25, 35, 15, 35, 35, 35, 10, 35, 35, 35, 10]
 
 for approach_counter, approach in enumerate(approaches_fdr):
     fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
@@ -82,6 +82,8 @@ for approach_counter, approach in enumerate(approaches_fdr):
                                   title = subject_id,
                                   axes = axes[int(cidx / 3), int(cidx % 3)],
                                   annotate = False,
+                                  vmin = 0,
+                                  vmax = vmax_list[approach_counter],
                                   plot_abs = True)
     plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()
