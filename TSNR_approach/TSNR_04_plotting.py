@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Created on Wed Jun 29 20:35:16 2022
+
+@author: markre
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Aug 13 11:16:15 2021
 This script is used to create graphs for the TSNR main effects as well as difference effects as calculated.
 
@@ -81,7 +89,7 @@ for column_counter, column in enumerate(mean_LC_value_df.columns):
     confidence_interval = confidence_interval[1] - mean
     LC_plotting_df[column][0], LC_plotting_df[column][1] = mean, confidence_interval
 
-df_dic = ({'Whole Brain': MNI_plotting_df, 'Gray Matter': gm_plotting_df, 'Brainstem': brainstem_plotting_df, 'LC': LC_plotting_df})
+df_dic = ({'Gray Matter': gm_plotting_df, 'Brainstem': brainstem_plotting_df, 'LC': LC_plotting_df})
 
 
 #============================================
@@ -89,15 +97,15 @@ df_dic = ({'Whole Brain': MNI_plotting_df, 'Gray Matter': gm_plotting_df, 'Brain
 #============================================
 
 
-x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12],[ 14, 15, 16]]
-group_pos = [3, 7, 11, 15]
+x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12]]
+group_pos = [3, 7, 11]
 fig = plt.figure()
 
 for counter, (keys, values) in enumerate(df_dic.items()):   
     ax1 = fig.add_subplot()
     colors = ['dimgray','silver', 'whitesmoke']
     bar_width = 1
-    group_main_effect = ['MNI', 'Grey Matter', 'Brainstem', 'LC']
+    group_main_effect = ['Grey Matter', 'Brainstem', 'LC']
     bars2_difference_effect = ('RETROICOR', 'AROMA', 'aCompCor')
     plt.ylim(0,80)
     
@@ -123,15 +131,15 @@ for counter, (keys, values) in enumerate(df_dic.items()):
     plt.savefig('/project/3013068.03/test/TSNR_approach/main_effects.png')
 
 
-x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12],[ 14, 15, 16]]
-group_pos = [3, 7, 11, 15]
+x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12]]
+group_pos = [3, 7, 11]
 fig = plt.figure()
 
 for counter, (keys, values) in enumerate(df_dic.items()):   
     ax1 = fig.add_subplot()
     colors = ['dimgray','silver', 'whitesmoke']
     bar_width = 1
-    group_main_effect = ['MNI', 'Grey Matter', 'Brainstem', 'LC']
+    group_main_effect = ['Grey Matter', 'Brainstem', 'LC']
     plt.ylim(0,25)
     
     bars = ax1.bar(x_pos[counter],
