@@ -43,7 +43,7 @@ for glms in output_list_names:
 
 
 
-names = ['Uncleaned', 'RETROICOR', 'AROMA', 'aCompCor', 'Combined tSNR RETROICOR+AROMA', 'Combined tSNR AROMA+aCompCor', 'Combined tSNR RETROICOR+AROMA+aCompCor', 'RETROICOR over AROMA | tSNR Difference',
+glm_descriptive_names = ['Uncleaned', 'RETROICOR', 'AROMA', 'aCompCor', 'Combined tSNR RETROICOR+AROMA', 'Combined tSNR AROMA+aCompCor', 'Combined tSNR RETROICOR+AROMA+aCompCor', 'RETROICOR over AROMA | tSNR Difference',
 'AROMA over RETROICOR | tSNR Difference', 'aCompCor over AROMA | tSNR Difference','RETROICOR over AROMA + aCompCor | tSNR Difference',
 'AROMA over Uncleaned | tSNR Difference',
 'Combined RETROICOR + AROMA over Uncleaned | tSNR Difference', 'RETROICOR over Uncleaned | tSNR Difference',
@@ -55,11 +55,11 @@ mean_list = glob.glob(BASEPATH + 'mean_TSNR/*')
 
 for mean_counter, mean_name in enumerate(mean_list):
     nilearn.plotting.plot_img(nib.load(mean_name), 
-                              display_mode = 'z', 
-                              threshold = 0.01, 
+                              display_mode = 'z',
+                              threshold = 0.001,
                               black_bg = True,
                               colorbar = True,
                               cmap = 'hot',
                               cut_coords = 8,
-                              title = names[mean_counter],
+                              vmin = 0,
                               output_file = BASEPATH + 'mean_TSNR/' + names[mean_counter])
