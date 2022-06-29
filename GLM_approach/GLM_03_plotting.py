@@ -45,21 +45,49 @@ for subs in part_list:
         continue
 
 #Create a list of all GLM contrasts across subjects
-approaches = []
+approaches_fdr = []
+approaches_fwe = []
 for subs in part_list:
     sub_id = subs[-7:]
     sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
     zmaps_fdr = glob.glob(sub_path + '*/*fdr_corrected.nii.gz')
-    if approaches == []:
+    zmaps_fwe = glob.glob(sub_path + '*/*fwe_corrected.nii.gz')
+    if approaches_fdr == []:
         for count,x in enumerate(zmaps_fdr):
-                approaches.append([x])
+                approaches_fdr.append([x])
     else:
         for count,x in enumerate(zmaps_fdr):
-            approaches[count].append(x)
+            approaches_fdr[count].append(x)
+    if approaches_fwe == []:
+        for count,x in enumerate(zmaps_fwe):
+                approaches_fwe.append([x])
+    else:
+        for count,x in enumerate(zmaps_fwe):
+            approaches_fwe[count].append(x)
         
 
+#Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM\
+
+vmin_list = []
+vmax_list = []
+
+for approach_counter, approach in enumerate(approaches_fdr):
+    fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
+    for cidx, zmap in enumerate(approach): 
+        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
+        print(subject_id)
+        plotting.plot_glass_brain(zmap,
+                                  colorbar = True,
+                                  threshold = None,
+                                  title = subject_id,
+                                  axes = axes[int(cidx / 3), int(cidx % 3)],
+                                  annotate = False,
+                                  plot_abs = True)
+    plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
+    plt.close()
+
 #Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM
-for approach_counter, approach in enumerate(approaches):
+for approach_counter, approach in enumerate(approaches_fwe):
     fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
     for cidx, zmap in enumerate(approach): 
         subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
@@ -71,6 +99,5 @@ for approach_counter, approach in enumerate(approaches):
                                   axes = axes[int(cidx / 3), int(cidx % 3)],
                                   annotate = False,
                                   plot_abs = False)
-    plt.savefig(BASEPATH + approaches[approach_counter][0][approaches[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
+    plt.savefig(BASEPATH + 'fwe_plot/' + approaches_fwe[approach_counter][0][approaches_fwe[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()
-
