@@ -109,14 +109,14 @@ for subject in part_list:
     sub_phys = sub_obj.get_physio(session=ses_nr, run=2, task='RS')
 
     # confound creation
-    sub_phys_3C4R = sub_phys[retro_model]
+    retro_regressors_no_interaction = sub_phys[retro_model]
 
     # Expansion of retroICOR model with multiplication terms
-    multi_01 = sub_phys_3C4R['cardiac_phase_sin_1'] * sub_phys_3C4R['respiratory_phase_sin_1']
-    multi_02 = sub_phys_3C4R['cardiac_phase_sin_1'] * sub_phys_3C4R['respiratory_phase_cos_2']
-    multi_03 = sub_phys_3C4R['cardiac_phase_cos_1'] * sub_phys_3C4R['respiratory_phase_sin_1']
-    multi_04 = sub_phys_3C4R['cardiac_phase_cos_1'] * sub_phys_3C4R['respiratory_phase_sin_2']
-    sub_phys_3C4R1M = pd.concat([sub_phys_3C4R, multi_01, multi_02, multi_03, multi_04], axis=1)
+    multi_01 = retro_regressors_no_interaction['cardiac_phase_sin_1'] * retro_regressors_no_interaction['respiratory_phase_sin_1']
+    multi_02 = retro_regressors_no_interaction['cardiac_phase_sin_1'] * retro_regressors_no_interaction['respiratory_phase_cos_2']
+    multi_03 = retro_regressors_no_interaction['cardiac_phase_cos_1'] * retro_regressors_no_interaction['respiratory_phase_sin_1']
+    multi_04 = retro_regressors_no_interaction['cardiac_phase_cos_1'] * retro_regressors_no_interaction['respiratory_phase_sin_2']
+    retro_regressors = pd.concat([retro_regressors_no_interaction, multi_01, multi_02, multi_03, multi_04], axis=1)
 
 
     confounds_column_index = sub_confounds.columns.tolist()
@@ -126,22 +126,24 @@ for subject in part_list:
     
     #aCompCor addition
     acompcor_regressors = sub_confounds[['a_comp_cor_0{0}'.format(x) for x in range(5)]] 
-
-
+    
+    #retro_regressors = sub_obj.get_retro_confounds(session = ses_nr, task = 'RS')
+    #aroma_regressors = sub_obj.get_aroma_confounds(session = ses_nr, task = 'RS')
+    #acompcor_regressors = sub_obj.get_acompocor_confounds(session = ses_nr, task = 'RS')
 
     # Shuffling
     aroma_regressors_shuffled = aroma_regressors.copy()
-    sub_phys_3C4R1M_shuffled = sub_phys_3C4R1M.copy()
+    retro_regressors_shuffled = retro_regressors.copy()
     acompcor_regressors_shuffled = acompcor_regressors.copy()
     
     if not any(lists for lists in seed_dict[sub_id]):
-        seed_dict[sub_id][0] = [None] * len(sub_phys_3C4R1M_shuffled.columns)
+        seed_dict[sub_id][0] = [None] * len(retro_regressors_shuffled.columns)
         seed_dict[sub_id][1] = [None] * len(aroma_regressors_shuffled.columns)
         seed_dict[sub_id][2] = [None] * len(acompcor_regressors_shuffled.columns)
     
     seed_start = 0
-    for vector_number, vectors in enumerate(sub_phys_3C4R1M_shuffled):
-        sub_phys_3C4R1M_shuffled[vectors] = shuffling(sub_phys_3C4R1M_shuffled[vectors].copy(),
+    for vector_number, vectors in enumerate(retro_regressors_shuffled):
+        retro_regressors_shuffled[vectors] = shuffling(retro_regressors_shuffled[vectors].copy(),
                                                       sub_id=sub_id,
                                                       seed_dict=seed_dict,
                                                       seed_start=seed_start,
@@ -166,9 +168,9 @@ for subject in part_list:
  
     # New column names for padding variables (retro)
     new_names_retro = []
-    for counter in range(0,len(sub_phys_3C4R1M_shuffled.columns)):
-        new_names_retro.append(str(sub_phys_3C4R1M_shuffled.columns[counter]) + '_randomised')
-    sub_phys_3C4R1M_shuffled.columns = new_names_retro
+    for counter in range(0,len(retro_regressors_shuffled.columns)):
+        new_names_retro.append(str(retro_regressors_shuffled.columns[counter]) + '_randomised')
+    retro_regressors_shuffled.columns = new_names_retro
 
     # New column names for padding variables (AROMA)
     new_names_aroma = []
@@ -197,7 +199,7 @@ for subject in part_list:
             del func_data_mni
 
         # Full brain uncleaned TSNR map
-        noclean_dummy = pd.concat([sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
+        noclean_dummy = pd.concat([retro_regressors_shuffled, aroma_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(noclean_dummy)
         plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_noclean.png'.format(sub_id))
         plt.close()
@@ -211,7 +213,7 @@ for subject in part_list:
 
         gc.collect()
         # retroICOR TSNR map
-        retro_dummy = pd.concat([sub_phys_3C4R1M, aroma_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
+        retro_dummy = pd.concat([retro_regressors, aroma_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(retro_dummy)
         plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_retroICOR.png'.format(sub_id))
         plt.close()
@@ -224,7 +226,7 @@ for subject in part_list:
         
         gc.collect()
         # AROMA TSNR map
-        aroma_dummy = pd.concat([aroma_regressors, sub_phys_3C4R1M_shuffled, acompcor_regressors_shuffled], axis = 1)
+        aroma_dummy = pd.concat([aroma_regressors, retro_regressors_shuffled, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(aroma_dummy)
         plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA.png'.format(sub_id))
         plt.close()
@@ -238,7 +240,7 @@ for subject in part_list:
         gc.collect()
         
         # aCompCor TSNR map
-        acompcor_dummy = pd.concat([acompcor_regressors, sub_phys_3C4R1M_shuffled, aroma_regressors_shuffled], axis = 1)
+        acompcor_dummy = pd.concat([acompcor_regressors, retro_regressors_shuffled, aroma_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(aroma_dummy)
         plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_aCompCor.png'.format(sub_id))
         plt.close()
@@ -252,9 +254,9 @@ for subject in part_list:
         gc.collect()
         
         #Combined AROMA and aCompCor TSNR map
-        combined_aroma_acompcor = pd.concat([aroma_regressors, acompcor_regressors, sub_phys_3C4R1M_shuffled], axis = 1)
+        combined_aroma_acompcor = pd.concat([aroma_regressors, acompcor_regressors, retro_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(combined_aroma_acompcor)
-        plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA+retro.png'.format(sub_id))
+        plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA+aCompCor.png'.format(sub_id))
         func_data_aroma_acompcor_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = combined_aroma_acompcor, t_r = 2.02)
         tsnr_matrix_aroma_acompcor = np.divide(np.mean(func_data_aroma_acompcor_cleaned.get_fdata(), axis = 3), np.std(func_data_aroma_acompcor_cleaned.get_fdata(),axis = 3))
         del func_data_aroma_acompcor_cleaned
@@ -263,8 +265,8 @@ for subject in part_list:
         nib.save(nib.Nifti2Image(masked_tsnr_aroma_acompcor, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/glms/tsnr_aroma_acompcor_{1}.nii.gz'.format(sub_id, space_identifier))
 
         
-        #Combined AROMA and aCompCor TSNR map
-        combined_aroma_retro = pd.concat([sub_phys_3C4R1M, aroma_regressors, acompcor_regressors_shuffled], axis = 1)
+        #Combined AROMA and RETROICOR TSNR map
+        combined_aroma_retro = pd.concat([retro_regressors, aroma_regressors, acompcor_regressors_shuffled], axis = 1)
         fig = plot_design_matrix(combined_aroma_retro)
         plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA+retro.png'.format(sub_id))
         func_data_aroma_retro_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = combined_aroma_retro, t_r = 2.02)
@@ -276,9 +278,9 @@ for subject in part_list:
 
 
         # Combined AROMA, retroICOR and aCompCor TSNR map
-        combined_regressors = pd.concat([sub_phys_3C4R1M, aroma_regressors, acompcor_regressors], axis = 1)
+        combined_regressors = pd.concat([retro_regressors, aroma_regressors, acompcor_regressors], axis = 1)
         fig = plot_design_matrix(combined_regressors)
-        plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA+retro.png'.format(sub_id))
+        plt.savefig(BASEPATH + '{0}/design/confounds_cleaning_AROMA+retro+aCompCor.png'.format(sub_id))
         func_data_aroma_retro_acompcor_cleaned = nilearn.image.clean_img(func_data, standardize = False, detrend = False, confounds = combined_regressors, t_r = 2.02)
         tsnr_matrix_aroma_retro_acompcor = np.divide(np.mean(func_data_aroma_retro_acompcor_cleaned.get_fdata(), axis = 3), np.std(func_data_aroma_retro_acompcor_cleaned.get_fdata(),axis = 3))
         del func_data_aroma_retro_acompcor_cleaned
@@ -323,33 +325,53 @@ for subject in part_list:
 
 
         #Unique retro effect to aroma and acompcor
-        unique_tsnr_retro_to_aroma_acompcor = masked_tsnr_aroma_retro_acompcor - (masked_tsnr_aroma + masked_tsnr_acompcor)
+        unique_tsnr_retro_to_aroma_acompcor = masked_tsnr_aroma_retro_acompcor - masked_tsnr_aroma_acompcor
         nib.save(nib.Nifti2Image(unique_tsnr_retro_to_aroma_acompcor, affine = func_data.affine, header = func_data.header), BASEPATH + '{0}/glms/tsnr_difference_unique_retro_to_aroma_acompcor_{1}.nii.gz'.format(sub_id, space_identifier))
 
-
-        #Percentage of unique TSNR of retro to aroma
-        difference_percent_unique_tsnr_retro_to_aroma = ((((masked_tsnr_aroma_retro / masked_tsnr_uncleaned) - 1) * 100) - (
-                    ((masked_tsnr_aroma / masked_tsnr_uncleaned) - 1) * 100))
-        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma, affine=func_data.affine, header=func_data.header),
-                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_{1}.nii.gz'.format(sub_id,space_identifier))
-                              
+        #RETROICOR direct comparison to AROMA
+        difference_percent_unique_tsnr_retro_to_aroma = ((masked_tsnr_aroma_retro / masked_tsnr_aroma) - 1) * 100
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma , affine=func_data.affine, header=func_data.header),
+                  BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_{1}.nii.gz'.format(sub_id,space_identifier))
         
-        #Percentage of unique TSNR of aroma to retro
-        difference_percent_unique_tsnr_aroma_to_retro = ((((masked_tsnr_aroma_retro / masked_tsnr_uncleaned) - 1) * 100) - (((masked_tsnr_retro / masked_tsnr_uncleaned) - 1) * 100))
-        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_aroma_to_retro, affine=func_data.affine, header=func_data.header),
-                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_aroma_to_retro_{1}.nii.gz'.format(sub_id, space_identifier))
+        #AROMA direct comparison to RETROICOR
+        difference_percent_unique_tsnr_aroma_to_retro = ((masked_tsnr_aroma_retro / masked_tsnr_retro) - 1) * 100
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_aroma_to_retro , affine=func_data.affine, header=func_data.header),
+                  BASEPATH + '{0}/glms/tsnr_difference_percent_unique_aroma_to_retro_{1}.nii.gz'.format(sub_id,space_identifier))
         
-        #Percentage of unique TSNR of acompcor to aroma
-        difference_percent_unique_tsnr_acompcor_to_aroma = ((((masked_tsnr_aroma_acompcor / masked_tsnr_uncleaned) - 1) * 100) - (
-                    ((masked_tsnr_aroma / masked_tsnr_uncleaned) - 1) * 100))
+        #RETROICOR direct comparison to AROMA + aCompCor
+        difference_percent_unique_tsnr_retro_to_aroma_acompcor = ((masked_tsnr_aroma_retro_acompcor / masked_tsnr_aroma_acompcor) - 1) * 100
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma_acompcor, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_acompcor_{1}.nii.gz'.format(sub_id,space_identifier))  
+        
+        #aCompCor direct comparison to AROMA
+        difference_percent_unique_tsnr_acompcor_to_aroma = ((masked_tsnr_aroma_acompcor / masked_tsnr_aroma) - 1) * 100
         nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_acompcor_to_aroma, affine=func_data.affine, header=func_data.header),
                  BASEPATH + '{0}/glms/tsnr_difference_percent_unique_acompcor_to_aroma_{1}.nii.gz'.format(sub_id,space_identifier))
+
+
+        #Percentage of unique TSNR of retro to aroma vs_uncleaned_
+        difference_percent_unique_tsnr_retro_to_aroma_vs_uncleaned = ((((masked_tsnr_aroma_retro / masked_tsnr_uncleaned) - 1) * 100) - (
+                    ((masked_tsnr_aroma / masked_tsnr_uncleaned) - 1) * 100))
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma_vs_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_{1}.nii.gz'.format(sub_id,space_identifier))
+                              
         
-        #Percentage of unique TSNR of retro to aroma and acompcor
-        difference_percent_unique_tsnr_retro_to_aroma_acompcor = ((((masked_tsnr_aroma_retro_acompcor / masked_tsnr_uncleaned) - 1) * 100) - (
+        #Percentage of unique TSNR of aroma to retro vs_uncleaned_
+        difference_percent_unique_tsnr_aroma_to_retro_vs_uncleaned = ((((masked_tsnr_aroma_retro / masked_tsnr_uncleaned) - 1) * 100) - (((masked_tsnr_retro / masked_tsnr_uncleaned) - 1) * 100))
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_aroma_to_retro_vs_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_{1}.nii.gz'.format(sub_id, space_identifier))
+        
+        #Percentage of unique TSNR of acompcor to aroma vs_uncleaned_
+        difference_percent_unique_tsnr_acompcor_to_aroma_vs_uncleaned = ((((masked_tsnr_aroma_acompcor / masked_tsnr_uncleaned) - 1) * 100) - (
+                    ((masked_tsnr_aroma / masked_tsnr_uncleaned) - 1) * 100))
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_acompcor_to_aroma_vs_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_{1}.nii.gz'.format(sub_id,space_identifier))
+        
+        #Percentage of unique TSNR of retro to aroma and acompcor vs_uncleaned_
+        difference_percent_unique_tsnr_retro_to_aroma_acompcor_vs_uncleaned = ((((masked_tsnr_aroma_retro_acompcor / masked_tsnr_uncleaned) - 1) * 100) - (
                     (((masked_tsnr_aroma_acompcor) / masked_tsnr_uncleaned) - 1) * 100))
-        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma_acompcor, affine=func_data.affine, header=func_data.header),
-                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_acompcor_{1}.nii.gz'.format(sub_id,space_identifier))               
+        nib.save(nib.Nifti2Image(difference_percent_unique_tsnr_retro_to_aroma_acompcor_vs_uncleaned, affine=func_data.affine, header=func_data.header),
+                 BASEPATH + '{0}/glms/tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_{1}.nii.gz'.format(sub_id,space_identifier))               
         
         # Difference Percent retro
         difference_percent_retro_to_uncleaned =  ((masked_tsnr_retro / masked_tsnr_uncleaned) - 1) * 100
@@ -371,7 +393,9 @@ for subject in part_list:
                      unique_tsnr_retro_to_aroma, unique_tsnr_aroma_to_retro,  unique_tsnr_acompcor_to_aroma, unique_tsnr_retro_to_aroma_acompcor, difference_aroma_to_uncleaned,
                      difference_aroma_retro_to_uncleaned, difference_retro_uncleaned,
                      difference_percent_retro_to_uncleaned, difference_percent_aroma_to_uncleaned, difference_percent_acompcor_to_uncleaned, difference_percent_unique_tsnr_aroma_to_retro,
-                     difference_percent_unique_tsnr_retro_to_aroma, difference_percent_unique_tsnr_acompcor_to_aroma, difference_percent_unique_tsnr_retro_to_aroma_acompcor]
+                     difference_percent_unique_tsnr_retro_to_aroma, difference_percent_unique_tsnr_acompcor_to_aroma, difference_percent_unique_tsnr_retro_to_aroma_acompcor,
+                     difference_percent_unique_tsnr_retro_to_aroma_vs_uncleaned,  difference_percent_unique_tsnr_aroma_to_retro_vs_uncleaned, 
+                     difference_percent_unique_tsnr_acompcor_to_aroma_vs_uncleaned, difference_percent_unique_tsnr_retro_to_aroma_acompcor_vs_uncleaned]
 
 
         #Create Average TSNR images in MNI space for all comparisons
@@ -397,6 +421,12 @@ for subject in part_list:
             tsnr_difference_percent_unique_retro_to_aroma_MNI = difference_percent_unique_tsnr_retro_to_aroma[:, :, :, np.newaxis]
             tsnr_difference_percent_unique_acompcor_to_aroma_MNI = difference_percent_unique_tsnr_acompcor_to_aroma[:, :, :, np.newaxis]            
             tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI = difference_percent_unique_tsnr_retro_to_aroma_acompcor[:, :, :, np.newaxis] 
+            tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI = difference_percent_unique_tsnr_aroma_to_retro_vs_uncleaned[:, :, :, np.newaxis]
+            tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI = difference_percent_unique_tsnr_retro_to_aroma_vs_uncleaned[:, :, :, np.newaxis]
+            tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI = difference_percent_unique_tsnr_acompcor_to_aroma_vs_uncleaned[:, :, :, np.newaxis]            
+            tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI = difference_percent_unique_tsnr_retro_to_aroma_acompcor_vs_uncleaned[:, :, :, np.newaxis] 
+            
+            
             
             output_list = [tsnr_noclean_MNI, tsnr_retro_MNI, tsnr_aroma_MNI, tsnr_acompcor_MNI, tsnr_aroma_retro_MNI, tsnr_aroma_acompcor_MNI, 
                            tsnr_aroma_retro_acompcor_MNI, tsnr_unique_retro_to_aroma_MNI, tsnr_unique_aroma_to_retro_MNI, tsnr_unique_acompcor_to_aroma_MNI,tsnr_unique_retro_to_aroma_acompcor_MNI,
@@ -404,7 +434,9 @@ for subject in part_list:
                            tsnr_difference_aroma_retro_to_uncleaned_MNI, tsnr_difference_retro_to_uncleaned_MNI,
                            tsnr_difference_percent_retro_to_uncleaned_MNI,
                            tsnr_difference_percent_aroma_to_uncleaned_MNI, tsnr_difference_percent_acompcor_to_uncleaned_MNI, tsnr_difference_percent_unique_aroma_to_retro_MNI,tsnr_difference_percent_unique_retro_to_aroma_MNI, 
-                           tsnr_difference_percent_unique_acompcor_to_aroma_MNI, tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI]
+                           tsnr_difference_percent_unique_acompcor_to_aroma_MNI, tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI, tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI,
+                           tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI, tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI,
+                           tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI]
 
         elif sub_id != part_list[0][-7:] and func_data_counter == 0:
             for output_counter, output in enumerate(output_list):
@@ -416,7 +448,9 @@ for subject in part_list:
     'tsnr_difference_aroma_retro_to_uncleaned_MNI', 'tsnr_difference_retro_to_uncleaned_MNI',
     'tsnr_difference_percent_retro_to_uncleaned_MNI',
     'tsnr_difference_percent_aroma_to_uncleaned_MNI', 'tsnr_difference_percent_acompcor_to_uncleaned_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_MNI' ,'tsnr_difference_percent_unique_retro_to_aroma_MNI', 
-    'tsnr_difference_percent_unique_acompcor_to_aroma_MNI', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI']
+    'tsnr_difference_percent_unique_acompcor_to_aroma_MNI', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI',
+    'tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI', 'tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI',
+    'tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI']
 
 
 for output_counter, output in enumerate(output_list):

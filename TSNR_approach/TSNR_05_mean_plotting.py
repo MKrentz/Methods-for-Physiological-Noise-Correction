@@ -9,6 +9,7 @@ import glob
 import pandas as pd
 import nibabel as nib
 import numpy as np
+import nilearn.plotting
 
 #Set general path to GLM folder
 BASEPATH = '/project/3013068.03/test/TSNR_approach/'
@@ -18,12 +19,14 @@ part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
 
 output_list_names = ['tsnr_noclean_MNI', 'tsnr_retro_MNI', 'tsnr_aroma_MNI', 'tsnr_acompcor_MNI', 'tsnr_aroma_retro_MNI', 'tsnr_aroma_acompcor_MNI', 'tsnr_aroma_retro_acompcor_MNI', 'tsnr_difference_unique_retro_to_aroma_MNI',
-'tsnr_difference_unique_aroma_to_retro_MNI', 'tsnr_difference_unique_acompcor_to_aroma_MNI','tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
-'tsnr_difference_aroma_to_uncleaned_MNI',
-'tsnr_difference_aroma_retro_to_uncleaned_MNI', 'tsnr_difference_retro_to_uncleaned_MNI',
-'tsnr_difference_percent_retro_to_uncleaned_MNI',
-'tsnr_difference_percent_aroma_to_uncleaned_MNI', 'tsnr_difference_percent_acompcor_to_uncleaned_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_MNI' ,'tsnr_difference_percent_unique_retro_to_aroma_MNI', 
-'tsnr_difference_percent_unique_acompcor_to_aroma_MNI', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI']
+    'tsnr_difference_unique_aroma_to_retro_MNI', 'tsnr_difference_unique_acompcor_to_aroma_MNI','tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
+    'tsnr_difference_aroma_to_uncleaned_MNI',
+    'tsnr_difference_aroma_retro_to_uncleaned_MNI', 'tsnr_difference_retro_to_uncleaned_MNI',
+    'tsnr_difference_percent_retro_to_uncleaned_MNI',
+    'tsnr_difference_percent_aroma_to_uncleaned_MNI', 'tsnr_difference_percent_acompcor_to_uncleaned_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_MNI' ,'tsnr_difference_percent_unique_retro_to_aroma_MNI', 
+    'tsnr_difference_percent_unique_acompcor_to_aroma_MNI', 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI', 'tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI',
+    'tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI', 'tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI',
+    'tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI']
 
 overall_results = pd.DataFrame(index = [sub_id[-7:] for sub_id in part_list], columns = output_list_names)
 
@@ -52,7 +55,7 @@ glm_descriptive_names = ['Uncleaned', 'RETROICOR', 'AROMA', 'aCompCor', 'Combine
 'aCompCor over AROMA | tSNR Difference in Percent', 'RETROICOR over AROMA + aCompCor | tSNR Difference in Percent']
 
 mean_list = glob.glob(BASEPATH + 'mean_TSNR/*')
-
+cut_coords_values = [-60, -45, -30, -15, 0, 15, 30, 45, 60]
 for mean_counter, mean_name in enumerate(mean_list):
     nilearn.plotting.plot_img(nib.load(mean_name), 
                               display_mode = 'z',
@@ -60,6 +63,6 @@ for mean_counter, mean_name in enumerate(mean_list):
                               black_bg = True,
                               colorbar = True,
                               cmap = 'hot',
-                              cut_coords = 8,
+                              cut_coords = cut_coords_values,
                               vmin = 0,
-                              output_file = BASEPATH + 'mean_TSNR/' + names[mean_counter])
+                              output_file = BASEPATH + 'mean_TSNR/' + output_list_names[mean_counter])
