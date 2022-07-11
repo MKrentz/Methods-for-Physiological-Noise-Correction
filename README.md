@@ -38,9 +38,12 @@ Additionally, multiple thresholded images are created:
 *GLM_03_plotting.py*
 
 This script creates a variety of glass-brain plots showing per subject as well as overall:
-* The unique variance explained by RETROICOR
-* The unique variance explained by AROMA
-* The shared variance explained by RETROICOR and AROMA
+* The variance explained by RETROICOR
+* The variance explained by AROMA
+* The variance explained by aCompCor
+* The unqiue variance explained by aCompCor in the presence of AROMA
+* The unqiue variance explained by RETROICOR in the presence of AROMA
+* The unqiue variance explained by RETROICOR in the presence of AROMA and aCompCor
 
 *GLM_04_melodic_component_glm.py*
 
