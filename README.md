@@ -30,22 +30,13 @@ Including: 10 cardiac phase regressors, 10 respiratory phase regressors, 4 inter
 This script implements the calculation of a standard glm in nilearn. Using a combination of RETROICOR model and AROMA regressors
 as variables of interest. 
 
-Additionally, multiple thresholded images are created: 
-* Uncorrected, 
-* FDR-corrected, 
-* FWE-corrected.
-
 *GLM_03_plotting.py*
 
-This script creates a variety of glass-brain plots showing per subject as well as overall:
-* The unique variance explained by RETROICOR
-* The unique variance explained by AROMA
-* The shared variance explained by RETROICOR and AROMA
+This script creates a variety of glass-brain plots showing per subject as well as overall.
 
 *GLM_04_melodic_component_glm.py*
 
-This script is used to assess the overlay of melodic components used for AROMA with previously identified unique variance distribution of RETROICOR. Potentially, this allow for identifcation
-of AROMA misclassifications. Consequently the following steps are taken on a per subject basis:
+This script is used to assess the overlay of melodic components used for AROMA with previously identified unique variance distribution of RETROICOR. This allows for identifcation of AROMA misclassifications. Consequently the following steps are taken on a per subject basis:
    * Binarise F-Map for unique variance explained by RETROICOR
    * Compute Melodic spatial maps by running single-regressor GLMs
    * Assess Overlap of melodic results with binarised RETROICOR maps
