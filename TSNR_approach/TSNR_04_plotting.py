@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Jun 29 20:35:16 2022
 
-@author: markre
-"""
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Aug 13 11:16:15 2021
 This script is used to create graphs for the TSNR main effects as well as difference effects as calculated.

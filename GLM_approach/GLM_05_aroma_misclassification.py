@@ -2,12 +2,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-The function of this script is to compile and sort the MELODIC component matching results.
-For every melodic component a spatial overlap was calculated with a binarised z-map of an F-contrast
-exploring unique variance of RETROICOR with AROMA components in the model (created with Comparison_FMAP_MELODIC.py).
-Resulting overlap can be taken as a quantitative approach to identify misclassification of AROMA-signal components
-and will be used to identify the potential for model additions after identification.
-
+@author: markre
 """
 
 import glob

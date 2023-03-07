@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Spyder Editor
+@author: markre
 
-This is a temporary script file.
 """
 
 import glob

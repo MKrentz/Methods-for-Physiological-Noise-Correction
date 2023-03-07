@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 13 12:52:40 2021
+
+@author: markre
+"""
+
 import nibabel as nib
 from Subject_Class import Subject
 from nilearn.image import resample_to_img
