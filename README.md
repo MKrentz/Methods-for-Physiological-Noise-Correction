@@ -1,7 +1,7 @@
 # RETROICOR AROMA Comparison
 
 This repository contains all used analysis steps of project 3013068.03 at the Donders Center for Cognitive Neuroimaging.
-Assuming familiarity with the general project the folder/script structure is as follows:
+Assuming familiarity with the general project, the folder/script structure is as follows:
 
 **Setup**
 
@@ -27,7 +27,7 @@ Including: 10 cardiac phase regressors, 10 respiratory phase regressors, 4 inter
     
 *GLM_02_run.py*
 
-This script implements the calculation of a standard glm in nilearn. Using a combination of RETROICOR model and AROMA regressors
+This script implements the calculation of a standard glm in nilearn. Using a combination of RETROICOR model, AROMA regressors as well as aCompCor regressors
 as variables of interest. 
 
 Additionally, multiple thresholded images are created: 
@@ -63,7 +63,12 @@ as run in *GLM_02_run.py* with the addition identified Melodic components to the
 
 To assess the quality of the potential improvement as a consequence of added melodic components a dice index is calculated and plotted
 for a binarised thresholded F-map as created by *GLM_02_run.py* and *GLM_05_aroma_misclassifications.py*. This is done to visualise the potential improvement
-of Melodic component additions. Note: The binarising of supra-threshold F-values does not maintain the strength of the potential effect.
+of Melodic component additions. Note: The binarising of supra-threshold F-values does not maintain the strength of the potential effect. Furthermore, this approach was not described in the manuscript resulting from these scripts.
+
+*GLM_07_zchange_calculation.py*
+
+Similar to *GLM_06_dice_calculation.py*, this script aims to assess the quality of the potential improvement as a consequence of added melodic components. However, this script ultimately used for manuscript calulations, uses an approach of comparing z-map change rather than dice coeffiecient. 
+
 
 **TSNR_approach**
 
@@ -71,20 +76,11 @@ of Melodic component additions. Note: The binarising of supra-threshold F-values
 
 This script implements the calculation of TSNR for the different tested noise-cleaning procedures.
 
-Creating different TSNR map for:
-   * Uncleaned data
-   * aggrAROMA cleaned data
-   * RETROICOR cleaned data
-   * aggrAROMA AND RETROICOR cleaned data
+*TSNR_02_calculation.py*
 
-Additionally maps are created visualising the unique contributions of one method OVER another.
-   * Unique TSNR improvement of aggrAROMA (TSNR of aggrAROMA+RETRO - TSNR of RETRO)
-   * Unique TSNR improvement of RETROICOR (TSNR of aggrAROMA+RETRO - TSNR of aggrAROMA)
-   * Difference in TSNR improvement between RETROICOR and aggrAROMA (TSNR of aggrAROMA - TSNR of RETRO)
-   * TSNR improvement of uncleaned data for aggrAROMA (TSNR of aggrAROMA - TSNR of uncleaned data)
-   * TSNR improvement of uncleaned data for RETROICOR (TSNR of RETROICOR - TSNR of uncleaned data)
+This script implements the mask creation for the following TSNR analysis for grey matter as well as locus coeruleus.
 
-*TSNR_02_stats.py*
+*TSNR_03_stats.py*
 
 This scripts calculates and tests the TSNR improvement as a consequence of the different cleaning procedures for a variety of regions of interest:
 * Whole Brain
@@ -92,11 +88,16 @@ This scripts calculates and tests the TSNR improvement as a consequence of the d
 * Brainstem
 * Locus Coeruleus
 
-*TSNR_03_plotting.py*
+*TSNR_04_plotting.py*
 
-This script creates corresponding bar-graphs for calculations made in *TSNR_02_stats.py*.
-* Main effect of cleaning per ROI
-* Unqiue cleaning effect per ROI
+This script creates corresponding bar-graphs for calculations made in *TSNR_03_stats.py*.
 * Collected main effets of cleaning
 * Collected unique cleaning effects
 
+*TSNR_05_stats_correlation*
+
+This script calculates correlations between unique RETROICOR improvements and ICA-AROMA (Manuscript Figure 6).
+
+*TSNR_06_mean_plotting*
+
+This script calculates mean TSNR maps for the different noise correction methods and combinations (Manuscript Figure 1).
