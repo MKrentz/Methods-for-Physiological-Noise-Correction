@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 13 12:52:40 2021
-This still contains a problem with the lack of Subject-008s LC mask. Currently it leads to mean lists of different lengths.
 @author: markre
 """
 

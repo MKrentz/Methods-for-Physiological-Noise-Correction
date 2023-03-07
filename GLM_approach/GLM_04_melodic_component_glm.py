@@ -3,14 +3,6 @@
 """
 Created on Thu Jul  8 11:43:04 2021
 
-Script to binarise activation maps to assess spatial overlap with MELODIC components
-Steps:
-    
-    Binarise F-Map to have spatial overlay [DONE]
-    Compute Melodic Spatial Maps
-    Binarise Maps
-    Assess Overlap
-
 @author: markre
 """
 import glob

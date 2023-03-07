@@ -7,6 +7,7 @@ Those components, selected based on their spatial overlap with the RETROICOR pat
 
 1. Calculate binarised maps from new thresholded zmaps and calculate overlap
 
+@author: markre
 
 """
 

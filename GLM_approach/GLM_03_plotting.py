@@ -5,8 +5,6 @@ Created on Tue Jul 22 12:34:33 2021
 
 @author: markre
 
-Script to create plots of thresholded maps for AROMA vs. RETRO comparison
-
 
 """
 

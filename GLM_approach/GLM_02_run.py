@@ -5,9 +5,6 @@ Created on Tue Jul 20 15:30:33 2021
 
 @author: markre
 
-script to run GLMs used for analysis of retroICOR vs aroma variance explained.
-
-Attempt at recreating FsL GLMs for easier access
 """
 
 import glob
