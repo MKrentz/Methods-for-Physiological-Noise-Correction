@@ -54,7 +54,7 @@ for subject in participant_list:
             melodic_added_data = melodic_added_nii.get_fdata()
 
             melodic_added_masked = np.ma.array(np.nan_to_num(melodic_added_data, neginf=0, posinf=0),
-                                             mask=zmap_mat)
+                                               mask=zmap_mat)
             masked_difference = zmap_masked - melodic_added_masked
             masked_difference_mean = masked_difference.mean()
 
@@ -67,7 +67,7 @@ for subject in participant_list:
 
             z_change_frame = pd.DataFrame({'Z Change': z_change_list, 'Melodic Component': component_list, 'Subject': [sub_id]*len(z_change_list)})
 
-    #Create overall index
+        #Create overall index
         index_list.append(z_change_frame)
 
 # Gather results across subjects

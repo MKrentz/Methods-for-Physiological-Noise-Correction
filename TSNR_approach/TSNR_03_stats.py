@@ -15,6 +15,8 @@ from scipy import stats
 from Subject_Class import Subject
 from nilearn.datasets import load_mni152_brain_mask
 import pandas as pd
+from numpy import mean, std
+from math import sqrt
 
 BASEPATH = '/project/3013068.03/test/TSNR_approach/'
 
@@ -31,6 +33,7 @@ brainstem_mat = np.where((brainstem_mat == 0)|(brainstem_mat == 1), 1-brainstem_
 
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
+part_list.remove('/project/3013068.03/test/TSNR_approach/sub-008')
 
 
 # Planned comparisons
@@ -119,36 +122,63 @@ output_names = ['RETROICOR Cleaned', 'AROMA Cleaned', 'aCompCor Cleaned', 'Uniqu
 
 results_df = pd.DataFrame(index=output_names, columns=space_name)
 
+def cohen_d(x,y):
+        return (mean(x) - mean(y)) / sqrt((std(x, ddof=1) ** 2 + std(y, ddof=1) ** 2) / 2.0)
+def cohen_d_within(x):
+    return mean(x) / std(x, ddof = 1)
 
 for counter, index in enumerate(results_df.columns):
     if index == 'MNI' or index == 'Brainstem':
-        results_df.loc['RETROICOR Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_retro_MNI'])]
-        results_df.loc['AROMA Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_aroma_MNI'])]
-        results_df.loc['aCompCor Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_acompcor_MNI'])]
-        results_df.loc['Unique aCompCor Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_MNI'], popmean=0)]
-        results_df.loc['Unique RETROICOR Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_MNI'], popmean=0)]
-        results_df.loc['Unique RETROICOR Effect to AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_MNI'], popmean=0)]
-        results_df.loc['Percent aCompCor Effect to AROMA', index] =  [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI'], popmean=0)]
-        results_df.loc['Percent AROMA Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_MNI'], popmean = 0)]
-        results_df.loc['Percent aCompCor Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_MNI'], popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_MNI'], popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect vs AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI'], popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect vs AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI'], popmean = 0)]
+        results_df.loc['RETROICOR Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_retro_MNI']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_retro_MNI'])]
+        results_df.loc['AROMA Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_aroma_MNI']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_aroma_MNI'])]
+        results_df.loc['aCompCor Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_acompcor_MNI']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_MNI'], stats_list[counter]['tsnr_acompcor_MNI'])]
+        results_df.loc['Unique aCompCor Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_MNI'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_MNI'])]
+        results_df.loc['Unique RETROICOR Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_MNI'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_MNI'])]
+        results_df.loc['Unique RETROICOR Effect to AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_MNI'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_MNI'])]
+        results_df.loc['Percent aCompCor Effect to AROMA', index] =  [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI'])]
+        results_df.loc['Percent AROMA Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_MNI'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_MNI'])]
+        results_df.loc['Percent aCompCor Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_MNI'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_MNI'])]
+        results_df.loc['Percent RETROICOR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_MNI'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_MNI'])]
+        results_df.loc['Percent RETROICOR Effect vs AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI'], popmean = 0),
+                       cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI'])]
+        results_df.loc['Percent RETROICOR Effect vs AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI'])]
    
     elif index == 'GrayMatter' or index == 'LC':
-        results_df.loc['RETROICOR Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'].dropna(), stats_list[counter]['tsnr_retro_native'].dropna())]
-        results_df.loc['AROMA Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'].dropna(), stats_list[counter]['tsnr_aroma_native'].dropna())]
-        results_df.loc['aCompCor Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'].dropna(), stats_list[counter]['tsnr_acompcor_native'].dropna())]
-        results_df.loc['Unique aCompCor Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_native'].dropna(), popmean=0)]
-        results_df.loc['Unique RETROICOR Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_native'].dropna(), popmean=0)]
-        results_df.loc['Unique RETROICOR Effect to AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_native'].dropna(), popmean=0)]
-        results_df.loc['Percent aCompCor Effect to AROMA', index] =  [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_native'].dropna(), popmean=0)]
-        results_df.loc['Percent AROMA Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_native'].dropna(), popmean = 0)]
-        results_df.loc['Percent aCompCor Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_native'].dropna(), popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_native'].dropna(), popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect vs AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_native'].dropna(), popmean = 0)]
-        results_df.loc['Percent RETROICOR Effect vs AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_native'].dropna(), popmean = 0)]
-
+        results_df.loc['RETROICOR Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_retro_native']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_retro_native'])]
+        results_df.loc['AROMA Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_aroma_native']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_aroma_native'])]
+        results_df.loc['aCompCor Cleaned', index] = [stats.ttest_rel(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_acompcor_native']),
+                      cohen_d(stats_list[counter]['tsnr_noclean_native'], stats_list[counter]['tsnr_acompcor_native'])]
+        results_df.loc['Unique aCompCor Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_native'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_acompcor_to_aroma_native'])]
+        results_df.loc['Unique RETROICOR Effect to AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_native'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_native'])]
+        results_df.loc['Unique RETROICOR Effect to AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_native'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_unique_retro_to_aroma_acompcor_native'])]
+        results_df.loc['Percent aCompCor Effect to AROMA', index] =  [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_native'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_native'])]
+        results_df.loc['Percent AROMA Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_native'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_aroma_to_uncleaned_native'])]
+        results_df.loc['Percent aCompCor Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_native'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_acompcor_to_uncleaned_native'])]
+        results_df.loc['Percent RETROICOR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_native'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_to_uncleaned_native'])]
+        results_df.loc['Percent RETROICOR Effect vs AROMA', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_native'], popmean = 0),
+                       cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_native'])]
+        results_df.loc['Percent RETROICOR Effect vs AROMA and aCompCor', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_native'], popmean = 0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_native'])]
 
 
 results_df.to_csv(BASEPATH + 'stats_results.txt', sep = ' ')

@@ -89,7 +89,7 @@ for column_counter, column in enumerate(mean_LC_value_df.columns):
     confidence_interval = confidence_interval[1] - mean
     LC_plotting_df[column][0], LC_plotting_df[column][1] = mean, confidence_interval
 
-df_dic = ({'Gray Matter': gm_plotting_df, 'Brainstem': brainstem_plotting_df, 'LC': LC_plotting_df})
+df_dic = ({'Whole Brain': MNI_plotting_df, 'Gray Matter': gm_plotting_df, 'Brainstem': brainstem_plotting_df, 'LC': LC_plotting_df})
 
 
 #============================================
@@ -97,16 +97,16 @@ df_dic = ({'Gray Matter': gm_plotting_df, 'Brainstem': brainstem_plotting_df, 'L
 #============================================
 
 
-x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12]]
-group_pos = [3, 7, 11]
+x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12],[14, 15, 16]]
+group_pos = [3, 7, 11, 15]
 fig = plt.figure()
 
 for counter, (keys, values) in enumerate(df_dic.items()):   
     ax1 = fig.add_subplot()
     colors = ['dimgray','silver', 'whitesmoke']
     bar_width = 1
-    group_main_effect = ['Grey Matter', 'Brainstem', 'LC']
-    bars2_difference_effect = ('RETROICOR', 'AROMA', 'aCompCor')
+    group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
+    bars2_difference_effect = ['RETROICOR', 'AROMA', 'aCompCor']
     plt.ylim(0,80)
     
     bars = ax1.bar(x_pos[counter],
@@ -125,21 +125,22 @@ for counter, (keys, values) in enumerate(df_dic.items()):
     
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
+    plt.subplots_adjust(bottom=0.23)
     plt.xticks(group_pos, group_main_effect, rotation = -45)
     plt.title('% TSNR Improvement Compared to Uncleaned', size = 11, y = 1.1)
-    plt.legend(loc='upper right', handles= [retro_patch, aroma_patch, acompcor_patch])
-    plt.savefig('/project/3013068.03/test/TSNR_approach/main_effects.png')
+    plt.legend(loc='upper left', handles= [retro_patch, aroma_patch, acompcor_patch])
+    plt.savefig('/project/3013068.03/test/TSNR_approach/main_effects.svg', dpi = 1200)
 
 
-x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12]]
-group_pos = [3, 7, 11]
+x_pos = [[2, 3, 4],[6, 7, 8],[10, 11, 12],[14, 15, 16]]
+group_pos = [3, 7, 11, 15]
 fig = plt.figure()
 
 for counter, (keys, values) in enumerate(df_dic.items()):   
     ax1 = fig.add_subplot()
     colors = ['dimgray','silver', 'whitesmoke']
     bar_width = 1
-    group_main_effect = ['Grey Matter', 'Brainstem', 'LC']
+    group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
     plt.ylim(0,25)
     
     bars = ax1.bar(x_pos[counter],
@@ -158,10 +159,13 @@ for counter, (keys, values) in enumerate(df_dic.items()):
     
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
+    plt.subplots_adjust(bottom=0.23)
     plt.xticks(group_pos, group_main_effect, rotation = -45)
     plt.title('Unique RETROICOR effect in % TSNR improvement', size = 11, y = 1.1)
-    plt.legend(loc='upper center', handles= [retro_patch, aroma_patch, acompcor_patch])
-    plt.savefig('/project/3013068.03/test/TSNR_approach/unique_retro_effect.png')
+    plt.legend(loc='upper left', handles= [retro_patch, aroma_patch, acompcor_patch])
+    plt.savefig('/project/3013068.03/test/TSNR_approach/unique_retro_effect.svg', dpi = 1200)
+
+"""
 #============================================
 #      ===== MAIN EFFECT GRAPH =====
 # Create a 4x2 graph of the main TSNR effects
@@ -209,7 +213,7 @@ plt.gca().spines['top'].set_visible(False)
 plt.legend(frameon=False)
 plt.title('Percent TSNR Change', size = 11, y = 1.1)
 fig.subplots_adjust(bottom=0.2)
-plt.savefig(BASEPATH + '/Overall_Main_Effects.png')
+plt.savefig(BASEPATH + '/Overall_Main_Effects.png', dpi = 300)
 
 
 # ============================================
@@ -261,4 +265,5 @@ plt.gca().spines['top'].set_visible(False)
 plt.legend(frameon=False)
 plt.title('Overall Unique Effects', size = 11, y = 1.1)
 fig.subplots_adjust(bottom=0.2)
-plt.savefig(BASEPATH + '/Overall_UNIQUE_Effects.png')
+plt.savefig(BASEPATH + '/Overall_UNIQUE_Effects.png', dpi = 300)
+"""
