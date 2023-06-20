@@ -20,7 +20,7 @@ from nilearn.datasets import load_mni152_brain_mask
 BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
-
+part_list = [part_list[0]]
 # Indicating subject having the 'stress' condition during their FIRsT functional session
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015',
                'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
@@ -42,7 +42,7 @@ for subs in part_list:
     frame_times = np.arange(n_scans)*t_r
     
     # standard MNI mask used for masking
-    mni_mask = load_mni152_brain_mask()
+    mni_mask = sub.get_brainmask(MNI=True, session=ses_nr, run =2)
     
     # GLM settings
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02, 
@@ -85,7 +85,10 @@ for subs in part_list:
     contrast_matrix = np.eye(design_glm1.shape[1])
     F_contrast_retro = contrast_matrix[:contrast_length_retro]
     F_contrast_retro_output = glm_output.compute_contrast([F_contrast_retro], stat_type='F')
-
+    glm1_report = glm_output.generate_report(contrasts=[F_contrast_retro],
+                                             title=f'{sub_id} GLM1',
+                                             plot_type='glass')
+    glm1_report.save_as_html(f'{glm_path}/{sub_id}_report_glm1.html')
     # save resulting z-maps (unthresholded)
     nib.save(F_contrast_retro_output, glm_path + 'glm1_retro/variance_retro.nii.gz')
 
@@ -109,7 +112,10 @@ for subs in part_list:
     contrast_matrix = np.eye(design_glm2.shape[1])
     F_contrast_aroma = contrast_matrix[:contrast_length_aroma]
     F_contrast_aroma_output = glm_output.compute_contrast([F_contrast_aroma], stat_type='F')
-
+    glm2_report = glm_output.generate_report(contrasts=[F_contrast_aroma],
+                                             title=f'{sub_id} GLM2',
+                                             plot_type='glass')
+    glm2_report.save_as_html(f'{glm_path}/{sub_id}_report_glm2.html')
     # save resulting z-maps (unthresholded)
     nib.save(F_contrast_aroma_output, glm_path + 'glm2_aroma/variance_aroma.nii.gz')
 
@@ -134,7 +140,10 @@ for subs in part_list:
     contrast_matrix = np.eye(design_glm3.shape[1])
     F_contrast_acompcor = contrast_matrix[:contrast_length_acompcor]
     F_contrast_acompcor_output = glm_output.compute_contrast([F_contrast_acompcor], stat_type='F')
-
+    glm3_report = glm_output.generate_report(contrasts=[F_contrast_acompcor],
+                                             title=f'{sub_id} GLM3',
+                                             plot_type='glass')
+    glm3_report.save_as_html(f'{glm_path}/{sub_id}_report_glm3.html')
     nib.save(F_contrast_acompcor_output, glm_path + 'glm3_acompcor/variance_acompcor.nii.gz')
 
     # Threshold maps FDR
@@ -157,9 +166,13 @@ for subs in part_list:
     F_contrast_aroma_unique = contrast_matrix[:contrast_length_aroma]
     F_contrast_acompcor_unique = contrast_matrix[contrast_length_aroma:-1]
     F_contrast_shared = contrast_matrix[:contrast_length_aroma+contrast_length_acompcor]
-
     glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm4)
-
+    glm4_report = glm_output.generate_report(contrasts=[F_contrast_aroma_unique,
+                                                        F_contrast_acompcor_unique,
+                                                        F_contrast_shared],
+                                             title=f'{sub_id} GLM4',
+                                             plot_type='glass')
+    glm4_report.save_as_html(f'{glm_path}/{sub_id}_report_glm4.html')
     # Create contrast matrix for F-tests
 
     # Compute contrasts (for the shared contrast the choice of GLM is redundant)
@@ -216,7 +229,12 @@ for subs in part_list:
     F_contrast_shared = contrast_matrix[:contrast_length_retro+contrast_length_aroma]
     
     glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm5)
-    
+    glm5_report = glm_output.generate_report(contrasts=[F_contrast_retro_unique,
+                                                        F_contrast_aroma_unique,
+                                                        F_contrast_shared],
+                                             title=f'{sub_id} GLM5',
+                                             plot_type='glass')
+    glm5_report.save_as_html(f'{glm_path}/{sub_id}_report_glm5.html')
 
     # Compute contrasts (for the shared contrast the choice of GLM is redundant)
     F_contrast_retro_output = glm_output.compute_contrast([F_contrast_retro_unique], stat_type='F')
@@ -267,6 +285,13 @@ for subs in part_list:
     F_contrast_aroma_unique = contrast_matrix[contrast_length_retro:contrast_length_retro+contrast_length_aroma]
     F_contrast_acompcor_unique = contrast_matrix[contrast_length_retro+contrast_length_aroma:-1]
     F_contrast_shared = contrast_matrix[:contrast_length_retro+contrast_length_aroma+contrast_length_acompcor]
+    glm6_report = glm_output.generate_report(contrasts=[F_contrast_retro_unique,
+                                                        F_contrast_aroma_unique,
+                                                        F_contrast_acompcor_unique,
+                                                        F_contrast_shared],
+                                             title=f'{sub_id} GLM6',
+                                             plot_type='glass')
+    glm6_report.save_as_html(f'{glm_path}/{sub_id}_report_glm6.html')
 
     # Create contrast matrix for F-tests
 
@@ -326,3 +351,36 @@ for subs in part_list:
                                                   'unique_variance_acompcor_fwe_corrected.nii.gz')
     nib.save(thresholded_shared_FWE, glm_path + 'glm6_retro_aroma_acompcor/'
                                                 'shared_variance_aroma_retro_fwe_corrected.nii.gz')
+
+
+    # ADD HR and RVT
+
+    full_physio = sub.get_physio(session=ses_nr, run=2, task='RS')
+    retro_addition_noise = full_physio[full_physio.columns[-5:]]
+    cl_retro_addition = np.shape(retro_addition_noise)[1]
+    design_glm7 = pd.concat([retro_noise.copy(),
+                             retro_addition_noise.copy(),
+                             aroma_noise.copy(),
+                             acompcor_noise.copy()],
+                            axis=1)
+    design_glm7['constant'] = constant
+    design_glm7.index = frame_times
+    glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm7)
+    contrast_matrix = np.eye(design_glm7.shape[1])
+    F_contrast_retro_unique = contrast_matrix[:contrast_length_retro]
+    F_contrast_retro_addition_unique = contrast_matrix[contrast_length_retro:
+                                                        contrast_length_retro+cl_retro_addition]
+    F_contrast_retro_combined = contrast_matrix[:contrast_length_retro+cl_retro_addition]
+    F_contrast_aroma_unique = contrast_matrix[contrast_length_retro+cl_retro_addition
+                                              :contrast_length_retro+cl_retro_addition+contrast_length_aroma]
+    F_contrast_acompcor_unique = contrast_matrix[contrast_length_retro+contrast_length_aroma+cl_retro_addition:-1]
+    F_contrast_shared = contrast_matrix[:-1]
+    glm7_report = glm_output.generate_report(contrasts=[F_contrast_retro_unique,
+                                                        F_contrast_retro_addition_unique,
+                                                        F_contrast_retro_combined,
+                                                        F_contrast_aroma_unique,
+                                                        F_contrast_acompcor_unique,
+                                                        F_contrast_shared],
+                                             title=f'{sub_id} GLM7',
+                                             plot_type='glass')
+    glm7_report.save_as_html(f'{glm_path}/{sub_id}_report_glm7.html')

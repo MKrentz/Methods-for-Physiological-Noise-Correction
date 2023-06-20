@@ -5,24 +5,22 @@ Created on Tue Jul 22 12:34:33 2021
 
 @author: markre
 
-
 """
-
 
 import glob
 from nilearn import plotting
 import matplotlib.pyplot as plt
 
-#Set general path to GLM folder
-BASEPATH = '/project/3013068.03/test/GLM_approach/'
+# Set general path to GLM folder
+BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
 
-#Source all subjects within the folder
+# Source all subjects within the folder
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort() 
 
-#Loop over subjects
+# Loop over subjects
 for subs in part_list:
-    #Create a glassbrain-graph per subject for each GLM contrast in each of the 6GLMs
+    # Create a glassbrain-graph per subject for each GLM contrast in each of the 6GLMs
     try:
         sub_id = subs[-7:]
         sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
@@ -30,19 +28,21 @@ for subs in part_list:
         
         for zmap_counter, subject_zmap in enumerate(zmaps_total):
             plotting.plot_glass_brain(subject_zmap,
-                                      colorbar = True,
-                                      threshold = None,
-                                      title = sub_id + zmaps_total[zmap_counter][zmaps_total[zmap_counter].rfind('/')+1:-7],
-                                      output_file = sub_path + zmaps_total[zmap_counter][zmaps_total[zmap_counter].rfind('glm'):-7] + '.png',
-                                      plot_abs = False)
+                                      colorbar=True,
+                                      threshold=None,
+                                      title=sub_id + zmaps_total[zmap_counter][zmaps_total[zmap_counter].
+                                      rfind('/')+1:-7],
+                                      output_file=sub_path + zmaps_total[zmap_counter][zmaps_total[zmap_counter].
+                                      rfind('glm'):-7] + '.png',
+                                      plot_abs=False)
             plt.close()
     
-    #In case not all subjects have been processed in GLM_02_run 
+    # In case not all subjects have been processed in GLM_02_run
     except:
         print('{} does not have calculated Z-Maps'.format(sub_id))
         continue
 
-#Create a list of all GLM contrasts across subjects
+# Create a list of all GLM contrasts across subjects
 approaches_fdr = []
 approaches_fwe = []
 for subs in part_list:
@@ -64,40 +64,41 @@ for subs in part_list:
             approaches_fwe[count].append(x)
         
 
-#Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM\
-
+# Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM\
 
 vmax_list = [25, 35, 25, 35, 15, 35, 35, 35, 10, 35, 35, 35, 10]
 
 for approach_counter, approach in enumerate(approaches_fdr):
-    fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
+    fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15, 25])
     for cidx, zmap in enumerate(approach): 
-        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
+        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') + 7]
         print(subject_id)
         plotting.plot_glass_brain(zmap,
-                                  colorbar = True,
-                                  threshold = None,
-                                  title = subject_id,
-                                  axes = axes[int(cidx / 3), int(cidx % 3)],
-                                  annotate = False,
-                                  vmin = 0,
-                                  vmax = vmax_list[approach_counter],
-                                  plot_abs = True)
-    plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
+                                  colorbar=True,
+                                  threshold=None,
+                                  title=subject_id,
+                                  axes=axes[int(cidx / 3), int(cidx % 3)],
+                                  annotate=False,
+                                  vmin=0,
+                                  vmax=vmax_list[approach_counter],
+                                  plot_abs=True)
+    plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].
+                rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()
 
-#Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM
+# Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM
 for approach_counter, approach in enumerate(approaches_fwe):
-    fig, axes = plt.subplots(nrows = 9, ncols = 3, figsize = [15, 25])
+    fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15, 25])
     for cidx, zmap in enumerate(approach): 
-        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') +7 ]
+        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') + 7]
         print(subject_id)
         plotting.plot_glass_brain(zmap,
-                                  colorbar = True,
-                                  threshold = None,
-                                  title = subject_id,
-                                  axes = axes[int(cidx / 3), int(cidx % 3)],
-                                  annotate = False,
-                                  plot_abs = False)
-    plt.savefig(BASEPATH + 'fwe_plot/' + approaches_fwe[approach_counter][0][approaches_fwe[approach_counter][0].rfind('glm'):-7].replace('/', '_') + '.png')
+                                  colorbar=True,
+                                  threshold=None,
+                                  title=subject_id,
+                                  axes=axes[int(cidx / 3), int(cidx % 3)],
+                                  annotate=False,
+                                  plot_abs=False)
+    plt.savefig(BASEPATH + 'fwe_plot/' + approaches_fwe[approach_counter][0][approaches_fwe[approach_counter][0].
+                rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()
