@@ -23,8 +23,8 @@ for subs in part_list:
     # Create a glassbrain-graph per subject for each GLM contrast in each of the 6GLMs
     try:
         sub_id = subs[-7:]
-        sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
-        zmaps_total = glob.glob(sub_path + 'glm*/*.nii.gz')
+        sub_path = f'/project/3013068.03/physio_revision/GLM_approach/{sub_id}/glm_output/'
+        zmaps_total = glob.glob(sub_path + 'glm*/*z_score*.nii.gz')
         
         for zmap_counter, subject_zmap in enumerate(zmaps_total):
             plotting.plot_glass_brain(subject_zmap,
@@ -47,9 +47,9 @@ approaches_fdr = []
 approaches_fwe = []
 for subs in part_list:
     sub_id = subs[-7:]
-    sub_path = '/project/3013068.03/test/GLM_approach/{}/glm_output/'.format(sub_id)
-    zmaps_fdr = glob.glob(sub_path + '*/*fdr_corrected.nii.gz')
-    zmaps_fwe = glob.glob(sub_path + '*/*fwe_corrected.nii.gz')
+    sub_path = f'/project/3013068.03/physio_revision/GLM_approach/{sub_id}/glm_output/'
+    zmaps_fdr = glob.glob(sub_path + '*/*z_score*fdr_corrected.nii.gz')
+    zmaps_fwe = glob.glob(sub_path + '*/*z_score*fwe_corrected.nii.gz')
     if approaches_fdr == []:
         for count,x in enumerate(zmaps_fdr):
                 approaches_fdr.append([x])
@@ -80,7 +80,6 @@ for approach_counter, approach in enumerate(approaches_fdr):
                                   axes=axes[int(cidx / 3), int(cidx % 3)],
                                   annotate=False,
                                   vmin=0,
-                                  vmax=vmax_list[approach_counter],
                                   plot_abs=True)
     plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].
                 rfind('glm'):-7].replace('/', '_') + '.png')

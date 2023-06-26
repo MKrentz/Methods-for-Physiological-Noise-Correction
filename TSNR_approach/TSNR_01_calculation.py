@@ -91,22 +91,30 @@ for subject in part_list:
 
     # Subject space_identifier
     sub_id = subject[-7:]
-    sub_obj = Subject(sub_id)
+    sub = Subject(sub_id)
 
     # Account for balancing in stress/control session order
     ses_nr = 2 if sub_id in stress_list else 1
 
     # Loading respective functional data into memory and online-smooth with 6mm FWHM
-    func_data_mni = sub_obj.get_func_data(session=ses_nr,run=2,task='RS', MNI=True)
-    func_data_mni = image.smooth_img(func_data_mni, fwhm=6)
-    func_data_native = sub_obj.get_func_data(session=ses_nr,run=2,task='RS', MNI=False)
-    func_data_native = image.smooth_img(func_data_native, fwhm=6)
+    func_data_mni = sub.get_func_data(session=ses_nr, 
+                                          run=2, 
+                                          task='RS',
+                                          MNI=True)
+    func_data_mni = image.smooth_img(func_data_mni,
+                                     fwhm=6)
+    func_data_native = sub.get_func_data(session=ses_nr,
+                                             run=2,
+                                             task='RS',
+                                             MNI=False)
+    func_data_native = image.smooth_img(func_data_native,
+                                        fwhm=6)
 
     # Load fmriprep confound files for respective runs, T1-brainmask and retroICOR regressors
-    sub_confounds = sub_obj.get_confounds(session=ses_nr, run=2, task='RS')
-    sub_brainmask = sub_obj.get_brainmask(session=ses_nr, run=2, MNI=False).get_fdata()
+    sub_confounds = sub.get_confounds(session=ses_nr, run=2, task='RS')
+    sub_brainmask = sub.get_brainmask(session=ses_nr, run=2, MNI=False).get_fdata()
     sub_brainmask = np.where((sub_brainmask == 0) | (sub_brainmask == 1), 1 - sub_brainmask, sub_brainmask)
-    sub_phys = sub_obj.get_physio(session=ses_nr, run=2, task='RS')
+    sub_phys = sub.get_physio(session=ses_nr, run=2, task='RS')
 
     # confound creation
     retro_regressors_no_interaction = sub_phys[retro_model]
@@ -127,9 +135,9 @@ for subject in part_list:
     #aCompCor addition
     acompcor_regressors = sub_confounds[['a_comp_cor_0{0}'.format(x) for x in range(5)]] 
     
-    #retro_regressors = sub_obj.get_retro_confounds(session = ses_nr, task = 'RS')
-    #aroma_regressors = sub_obj.get_aroma_confounds(session = ses_nr, task = 'RS')
-    #acompcor_regressors = sub_obj.get_acompocor_confounds(session = ses_nr, task = 'RS')
+    #retro_regressors = sub.get_retro_confounds(session = ses_nr, task = 'RS')
+    #aroma_regressors = sub.get_aroma_confounds(session = ses_nr, task = 'RS')
+    #acompcor_regressors = sub.get_acompocor_confounds(session = ses_nr, task = 'RS')
 
     # Shuffling
     aroma_regressors_shuffled = aroma_regressors.copy()

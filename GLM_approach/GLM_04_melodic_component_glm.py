@@ -16,11 +16,11 @@ from scipy.stats import norm
 from nilearn.datasets import load_mni152_brain_mask
 
 BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
-FMRIPREP_PATH = "/project/3013068.03/derivate/fmriprep/"
+FMRIPREP_PATH = "/project/3013068.03/fmriprep_test/"
 
 # List of all pre-thresholded z-maps (FWE/p<.05) displaying unique RETROICOR variance with AROMA in the model.
-participant_list = glob.glob(BASEPATH + 'sub-*/RETRO_vs_AROMA_revised'
-                             '/Unique_Variance_RETRO_fwe_corrected.nii.gz')
+participant_list = glob.glob(BASEPATH + 'sub-*/glm_output/glm5_retro_aroma'
+                             '/unique_retro_z_score_bonferroni_corrected.nii.gz')
 participant_list.sort()
 
 # Subjects having the stress sessions as their first functional session (ses-mri02)
@@ -31,7 +31,7 @@ for subject in participant_list:
 
     # Load respective subject
     sub_id = subject[subject.find('sub-'):subject.find('sub-') + 7]
-    sub_obj = Subject(sub_id)
+    sub = Subject(sub_id)
 
     # Fix scan parameters
     t_r = 2.02
@@ -44,7 +44,7 @@ for subject in participant_list:
     # Binarise and load thresholded z-map of RETROICOR explained variance beyond AROMA
     zmap = nib.load(subject)
     zmap_data = zmap.get_fdata()
-    zmap_data_binarised = zmap_data
+    zmap_data_binarised = zmap_data.copy()
     zmap_data_binarised[zmap_data_binarised > 0] = 1
 
     # Had to do this, no idea why. This part is cursed and I would like to know which devil made this happen.
@@ -63,12 +63,12 @@ for subject in participant_list:
         continue
 
     # Load respective functional Data
-    func_data = sub_obj.get_func_data(session=ses_nr, run=2, task='RS', MNI=True)
-    mni_mask = load_mni152_brain_mask()
+    func_data = sub.get_func_data(session=ses_nr, run=2, task='RS', MNI=True)
+    mni_mask = sub.get_brainmask(session=ses_nr, run=2, task='RS', MNI=True)
 
     # Create GLM with 6mm smoothing and no convolution
     melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02,
-                                                  slice_time_ref=0.5,
+                                                  slice_time_ref=0,
                                                   high_pass=0,
                                                   smoothing_fwhm=6,
                                                   drift_model=None,
@@ -79,15 +79,15 @@ for subject in participant_list:
     # Load melodic mixing matrix
     melodic_mixing_matrix = pd.read_csv(glob.glob(FMRIPREP_PATH + f'{sub_id}/ses-mri0{ses_nr+1}/func/{sub_id}_'
                                                                   f'ses-mri0{ses_nr+1}_task'
-                                                                  f'-15isomb3TR2020TE28RS*run-2_echo-1_'
+                                                                  f'-15isomb3TR2020TE28RS*run-2*'
                                                                   f'desc-MELODIC_mixing.tsv')[0],
                                         header=None,
                                         sep='\t')
 
     # Vector of AROMA classified noise ICs
-    sub_noise_components = pd.read_csv(glob.glob(FMRIPREP_PATH + f'{sub_id}/ses-mri0{1}/func/'
+    sub_noise_components = pd.read_csv(glob.glob(FMRIPREP_PATH + f'{sub_id}/ses-mri0{ses_nr+1}/func/'
                                                                  f'{sub_id}_ses-mri0{ses_nr+1}_'
-                                                                 f'task-15isomb3TR2020TE28RS*_dir-COL_run-2_echo-1_'
+                                                                 f'task-15isomb3TR2020TE28RS*_dir-COL_run-2*'
                                                                  f'AROMAnoiseICs.csv')[0],
                                        header=None)
     sub_sum = []
@@ -106,7 +106,7 @@ for subject in participant_list:
         # Create contrast '1' for simple t-contrast of the one model regressor.
         # Output here is nii-img like nibabel object.
         contrast = glm_output.compute_contrast(contrast_def='1', stat_type='t', output_type='z_score')
-        nib.save(contrast, BASEPATH + '{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.format(sub_id, x))
+        nib.save(contrast, BASEPATH + '{0}/melodic_glms_output/z_map_{0}_{1}.nii.gz'.format(sub_id, x))
 
         # Create Z-map image of easier visualisation
         plotting.plot_glass_brain(contrast, colorbar=True,
@@ -114,7 +114,7 @@ for subject in participant_list:
                                   title='Nilearn Z map of Melodic Component {0} (unc p<0.001)'.format(str(x+1)),
                                   plot_abs=False,
                                   display_mode='ortho',
-                                  output_file=BASEPATH + f'{sub_id}/Melodic_Matching_corrected/z_map_{sub_id}_{x}.png')
+                                  output_file=BASEPATH + f'{sub_id}/melodic_glms_output/z_map_{sub_id}_{x}.png')
 
         # Masking of data for goodness of fit calculation
         masked_difference = np.ma.masked_array(contrast.get_fdata(), mask=zmap_data_binarised)
@@ -140,4 +140,4 @@ for subject in participant_list:
     Subject_Data = pd.DataFrame(sub_sum, columns=['Inside Mask Sum', 'Inside Mask Mean', 'Outside Mask Sum',
                                                   'Outside Mask Mean', 'Goodness of Fit', 'Mask Voxel Count',
                                                   'Component Classification'])
-    Subject_Data.to_csv(BASEPATH + '{0}/Melodic_Matching_corrected/{0}_summary.txt'.format(sub_id))
+    Subject_Data.to_csv(BASEPATH + '{0}/melodic_glms_output/{0}_summary.txt'.format(sub_id))

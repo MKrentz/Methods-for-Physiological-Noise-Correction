@@ -12,7 +12,7 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 
 # Path to data
-BASEPATH = '/project/3013068.03/RETROICOR/Example_Visualisation/'
+BASEPATH = '/project/3013068.03/physio_revision/Example_Visualisation/'
 
 #Path to FDR corrected model of unique RETROICOR variance
 participant_list = glob.glob(BASEPATH + 'sub-*/RETRO_vs_AROMA_revised'\
