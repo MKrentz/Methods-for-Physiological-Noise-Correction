@@ -12,11 +12,11 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 
 # Path to data
-BASEPATH = '/project/3013068.03/physio_revision/Example_Visualisation/'
+BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
 
 #Path to FDR corrected model of unique RETROICOR variance
-participant_list = glob.glob(BASEPATH + 'sub-*/RETRO_vs_AROMA_revised'\
-                             '/Unique_Variance_RETRO_fdr_corrected.nii.gz')
+participant_list = glob.glob(BASEPATH + 'sub-*/glm_output/glm5_retro_aroma/'
+                             'unique_retro_z_score_bonferroni_corrected.nii.gz')
 participant_list.sort()
 
 
@@ -33,13 +33,13 @@ for subject in participant_list:
     zmap_original_data = zmap_original_nii.get_fdata()
     zmap_original_binarized = zmap_original_data.copy()
     zmap_original_binarized[zmap_original_binarized > 0] = 1
-    zmap_mat = np.where((zmap_original_binarized == 0) | (zmap_original_binarized == 1), 1 - zmap_original_binarized, zmap_original_binarized)
+    zmap_mat = np.where((zmap_original_binarized == 0) | (zmap_original_binarized == 1), 1 - zmap_original_binarized,
+                        zmap_original_binarized)
     zmap_masked = np.ma.array(np.nan_to_num(zmap_original_data, neginf=0, posinf=0),
                                              mask=zmap_mat)
 
     # Add z-maps for uncorrected addition of potential misclassifications
-    zmaps_melodic_added = glob.glob(BASEPATH + '{0}/'\
-                                     'Melodic_Matching_corrected/potential_misclassifications/AddComp*uncorrected.nii.gz'.format(sub_id))
+    zmaps_melodic_added = glob.glob(BASEPATH + f'{sub_id}/melodic_misclassifications/AddComp*uncorrected.nii.gz')
     zmaps_melodic_added.sort()
 
     # Check whether there has been possible misclassifications detected previously for this subject
@@ -72,29 +72,35 @@ for subject in participant_list:
 
 # Gather results across subjects
 overall_z_change = pd.concat(index_list)
-overall_z_change.sort_values('Z Change', inplace = True, ascending=False)
-overall_z_change.to_csv(BASEPATH + 'misclassification_zchange_overview.txt', index = False)
+overall_z_change.sort_values('Z Change',
+                             inplace=True,
+                             ascending=False)
+overall_z_change.to_csv(BASEPATH + 'misclassification_zchange_overview.txt',
+                        index=False)
 
 component_list = []
 title_list = []
 
 for index, lines in overall_z_change.iterrows():
-    component_list.append(nib.load(BASEPATH + '{0}/Melodic_Matching_corrected/z_map_{0}_{1}.nii.gz'.\
+    component_list.append(nib.load(BASEPATH + '{0}/melodic_glms_output/z_map_{0}_{1}.nii.gz'.\
                                format(lines['Subject'], lines['Melodic Component'] - 1)))
     title_list.append(lines['Subject'] + ': Component ' + str(lines['Melodic Component']) + ' / Z Change ' + str(np.round(lines['Z Change'], 3)))
 
 
 # Create plot for all misclassifications sorted by z_change
-fig, axes = plt.subplots(nrows = 14, ncols = 2, figsize = [20, 40])
-for component_counter, component in enumerate(component_list):
+fig, axes = plt.subplots(nrows=14,
+                         ncols=2,
+                         figsize=[20, 40])
+
+for component_counter, component in enumerate(component_list[:28]):
     plotting.plot_glass_brain(component,
-                              colorbar = True,
-                              threshold = None,
-                              title = title_list[component_counter],
-                              axes = axes[int(component_counter / 2), int(component_counter % 2)],
+                              colorbar=True,
+                              threshold=None,
+                              title=title_list[component_counter],
+                              axes=axes[int(component_counter / 2), int(component_counter % 2)],
                               annotate=False,
-                              plot_abs = False)
+                              plot_abs=False)
     print('{}% Done!'.format(component_counter / len(component_list) * 100))
 
-plt.savefig('/project/3013068.03/RETROICOR/overall_z_change_misclassifications.png')
+plt.savefig('/project/3013068.03/physio_revision/GLM_approach/overall_z_change_misclassifications.png')
 

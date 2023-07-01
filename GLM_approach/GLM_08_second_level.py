@@ -84,7 +84,7 @@ plot_design_matrix(design_matrix,
                    output_file=f'{basepath}/second_level/'
                                f'{contrast.split("/")[1]}_design_mat.png')
 
-nr_permutations = 10000
+nr_permutations = 6000
 print(f'Running non-parametric permutation test for {contrast_list_names[counter]}...')
 out_dict = non_parametric_inference(
     second_level_input,
