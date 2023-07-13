@@ -49,8 +49,8 @@ var_names_MNI = ['tsnr_difference_aroma_to_uncleaned_MNI',
                  'tsnr_difference_retro_hr_rvt_to_uncleaned_MNI',
                  'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_MNI',
                  'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_MNI',
-                 'tsnr_difference_percent_hr_rvt_to_uncleaned_MNI'
-                 ]
+                 'tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_percent_aroma_acompcor_to_uncleaned_MNI']
 
 var_names_native = ['tsnr_difference_aroma_to_uncleaned_native',
                     'tsnr_difference_retro_to_uncleaned_native',
@@ -77,7 +77,8 @@ var_names_native = ['tsnr_difference_aroma_to_uncleaned_native',
                     'tsnr_difference_retro_hr_rvt_to_uncleaned_native',
                     'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_native',
                     'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_native',
-                    'tsnr_difference_percent_hr_rvt_to_uncleaned_native']
+                    'tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native',
+                    'tsnr_difference_percent_aroma_acompcor_to_uncleaned_native']
 
 # Create object dictionary
 mean_MNI = pd.DataFrame(index=[sub[-7:] for sub in part_list], columns=var_names_MNI)
@@ -166,7 +167,7 @@ output_names = ['AROMA Cleaned',
                 'Percent RETROICOR and HR/RVT Cleaned'
                 'Percent RETROICOR and HR/RVT Effect vs AROMA',
                 'Percent RETROICOR and HR/RVT Effect vs AROMA and aCompCor'
-                ]
+                'Percent Aroma and aCompCor to Uncleaned']
 
 results_df = pd.DataFrame(index=output_names, columns=space_name)
 
@@ -213,6 +214,10 @@ for counter, index in enumerate(results_df.columns):
                       cohen_d_within(stats_list[counter]['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_MNI'])]
         results_df.loc['Percent RETROICOR and HR/RVT', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI'], popmean=0),
                       cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI'])]
+        results_df.loc['Percent Aroma and aCompCor to Uncleaned', index] = [
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_MNI'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_MNI'])]
+
     elif index == 'GrayMatter' or index == 'LC':
         results_df.loc['AROMA Cleaned', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_aroma_to_uncleaned_native'], popmean=0),
                       cohen_d_within(stats_list[counter]['tsnr_difference_aroma_to_uncleaned_native'])]
@@ -251,6 +256,8 @@ for counter, index in enumerate(results_df.columns):
         results_df.loc['Percent RETROICOR and HR/RVT', index] = [
             stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native'], popmean=0),
             cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native'])]
-
+        results_df.loc['Percent Aroma and aCompCor to Uncleaned', index] = [
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_native'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_native'])]
 results_df.to_csv(BASEPATH + 'stats_results.txt', sep=' ')
 

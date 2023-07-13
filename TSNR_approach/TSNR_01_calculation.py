@@ -18,7 +18,7 @@ Additionally maps are created visualising the unique contributions of a method O
     TSNR improvement of uncleaned data for aroma (TSNR of aroma - TSNR of uncleaned data)
     TSNR improvement of uncleaned data for retroICOR (TSNR of retroICOR - TSNR of uncleaned data)
 
-nilearn 0.7.1
+nilearn 0.10.1
 @author: MKrentz
 """
 
@@ -452,7 +452,8 @@ for subject in part_list:
                         'difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_vs_uncleaned':
                             ((((masked_tsnr_aroma_retro_acompcor_hr_rvt / masked_tsnr_uncleaned) - 1) * 100) - (
                                     (((masked_tsnr_aroma_acompcor) / masked_tsnr_uncleaned) - 1) * 100)),
-                        'difference_percent_retro_hr_rvt_to_uncleaned': ((masked_tsnr_retro_hr_rvt / masked_tsnr_uncleaned) - 1) * 100}
+                        'difference_percent_retro_hr_rvt_to_uncleaned': ((masked_tsnr_retro_hr_rvt / masked_tsnr_uncleaned) - 1) * 100,
+                        'difference_percent_aroma_acompcor_to_uncleaned': ((masked_tsnr_aroma_acompcor / masked_tsnr_uncleaned) - 1) * 100}
 
         for contrast in contrast_dic.keys():
             nib.save(nib.Nifti2Image(contrast_dic[contrast],
