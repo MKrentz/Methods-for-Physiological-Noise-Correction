@@ -12,11 +12,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 
-BASEPATH = '/project/3013068.03/physio_revision/TSNR_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/TSNR_approach/'
 
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
-part_list.remove('/project/3013068.03/physio_revision/TSNR_approach/sub-008')
+part_list.remove('/project/3013068.03/physio_revision_fixed/TSNR_approach/sub-008')
 
 mean_MNI = pd.read_csv(BASEPATH + 'MNI_means.txt', index_col=0)
 mean_brainstem = pd.read_csv(BASEPATH + 'brainstem_means.txt', index_col=0)

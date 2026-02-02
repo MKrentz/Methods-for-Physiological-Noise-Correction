@@ -13,14 +13,8 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import glob
 
-
-
-BASEPATH = '/project/3013068.03/physio_revision/TSNR_approach/'
-
-output_names = ['RETROICOR Cleaned', 'AROMA Cleaned', 'aCompCor Cleaned', 'Unique aCompCor Effect to AROMA', 'Unique RETROICOR Effect to AROMA', 'Unique RETROICOR Effect to AROMA and aCompCor',
-                'Percent RETROICOR Effect', 'Percent AROMA Effect', 'Percent aCompCor Effect', 'Percent RETROICOR Effect vs AROMA', 'Percent RETROICOR Effect vs AROMA and aCompCor']
+BASEPATH = '/project/3013068.03/physio_revision_fixed/TSNR_approach/'
 
 
 #Create a dataframe calculating mean and confidence intervals for the full-brain TSNR map
@@ -75,33 +69,39 @@ df_dic = ({'Whole Brain': MNI_plotting_df, 'Gray Matter': gm_plotting_df, 'Brain
 #============================================
 
 
-x_pos = [[2, 3, 4], [6, 7, 8], [10, 11, 12], [14, 15, 16]]
-group_pos = [3, 7, 11, 15]
+x_pos = [[2, 3, 4, 5, 6], [8, 9, 10, 11, 12], [14, 15, 16, 17, 18], [20, 21, 22, 23, 24]]
+group_pos = [4, 10, 16, 22]
 fig = plt.figure()
-colors = ['dimgray', 'silver', 'whitesmoke']
+colors = ['black', 'dimgray', 'silver', 'gainsboro', 'white']
 bar_width = 1
 group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
-bars2_difference_effect = ['RETROICOR', 'AROMA', 'aCompCor']
+bars2_difference_effect = ['RETROICOR', 'HR', 'RVT', 'AROMA', 'aCompCor']
 plt.ylim(0, 100)
 
-retro_patch = mpatches.Patch(color='dimgray', label='RETROICOR')
-aroma_patch = mpatches.Patch(color='silver', label='AROMA')
-acompcor_patch = mpatches.Patch(color='whitesmoke', label='aCompCor')
+retro_patch = mpatches.Patch(color='black', label='RETROICOR')
+hr_patch = mpatches.Patch(color='dimgray', label='HR')
+rvt_patch = mpatches.Patch(color='silver', label='RVT')
+aroma_patch = mpatches.Patch(color='gainsboro', label='AROMA')
+acompcor_patch = mpatches.Patch(color='white', label='aCompCor')
 
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)
 plt.subplots_adjust(bottom=0.23)
 plt.xticks(group_pos, group_main_effect, rotation=-45)
 plt.title('% TSNR Improvement Compared to Uncleaned', size=11, y=1.1)
-plt.legend(loc='upper left', handles=[retro_patch, aroma_patch, acompcor_patch])
+plt.legend(loc='upper left', handles=[retro_patch, hr_patch, rvt_patch, aroma_patch, acompcor_patch])
 
 
 for counter, (keys, values) in enumerate(df_dic.items()):
-    #ax1 = fig.add_subplot()
     bars =plt.bar(x_pos[counter],
-                   height=[values.loc['Mean']['tsnr_difference_percent_retro_to_uncleaned'], values.loc['Mean']['tsnr_difference_percent_aroma_to_uncleaned'],
-                           values.loc['Mean']['tsnr_difference_percent_acompcor_to_uncleaned']],
+                   height=[values.loc['Mean']['tsnr_difference_percent_retro_to_uncleaned'],
+                           values.loc['Mean']['tsnr_difference_percent_hr_to_uncleaned'],
+                           values.loc['Mean']['tsnr_difference_percent_rvt_to_uncleaned'],
+                           values.loc['Mean']['tsnr_difference_percent_aroma_to_uncleaned'],
+                           values.loc['Mean']['tsnr_difference_percent_acompcor_to_uncleaned'],],
                    yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_retro_to_uncleaned'],
+                         values.loc['Confidence Interval']['tsnr_difference_percent_hr_to_uncleaned'],
+                         values.loc['Confidence Interval']['tsnr_difference_percent_rvt_to_uncleaned'],
                          values.loc['Confidence Interval']['tsnr_difference_percent_aroma_to_uncleaned'],
                          values.loc['Confidence Interval']['tsnr_difference_percent_acompcor_to_uncleaned']],
                    width=bar_width,
@@ -111,66 +111,29 @@ for counter, (keys, values) in enumerate(df_dic.items()):
     
 plt.savefig(BASEPATH + 'main_effects.svg', dpi=1200)
 
-
-x_pos = [[2, 3, 4], [6, 7, 8], [10, 11, 12], [14, 15, 16]]
-group_pos = [3, 7, 11, 15]
-fig = plt.figure()
-colors = ['dimgray', 'silver', 'whitesmoke']
-bar_width = 1
-group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
-plt.ylim(0, 35)
-retro_patch = mpatches.Patch(color='dimgray', label='RETROICOR vs. Uncleaned')
-aroma_patch = mpatches.Patch(color='silver', label='RETROICOR vs. AROMA')
-acompcor_patch = mpatches.Patch(color='whitesmoke', label='RETROICOR vs. AROMA + aCompCor')
-
-plt.gca().spines['right'].set_visible(False)
-plt.gca().spines['top'].set_visible(False)
-plt.subplots_adjust(bottom=0.23)
-plt.xticks(group_pos, group_main_effect, rotation=-45)
-plt.title('Unique RETROICOR effect in % TSNR improvement', size=11, y=1.1)
-plt.legend(loc='upper left', handles=[retro_patch, aroma_patch, acompcor_patch])
-
-for counter, (keys, values) in enumerate(df_dic.items()):
-    bars = plt.bar(x_pos[counter],
-                  height = [values.loc['Mean']['tsnr_difference_percent_retro_to_uncleaned'], values.loc['Mean']['tsnr_difference_percent_unique_retro_to_aroma'],
-                            values.loc['Mean']['tsnr_difference_percent_unique_retro_to_aroma_acompcor']],
-                  yerr = [values.loc['Confidence Interval']['tsnr_difference_percent_retro_to_uncleaned'], values.loc['Confidence Interval']['tsnr_difference_percent_unique_retro_to_aroma'],
-                            values.loc['Confidence Interval']['tsnr_difference_percent_unique_retro_to_aroma_acompcor']],
-                  width = bar_width,
-                  capsize = 5,
-                  edgecolor = 'black',
-                  color = colors)
-    
-
-    plt.savefig(BASEPATH + 'unique_retro_effect.svg', dpi = 1200)
-
-
 # New FIGURE
-x_pos = [[2, 3, 4], [6, 7, 8], [10, 11, 12], [14, 15, 16]]
-group_pos = [3, 7, 11, 15]
+x_pos = [[2, 3], [5, 6], [8, 9], [11, 12]]
+group_pos = [2.5, 5.5, 8.5, 11.5]
 fig = plt.figure()
-colors = ['dimgray', 'silver', 'whitesmoke']
+colors = ['dimgray', 'whitesmoke']
 bar_width = 1
 group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
-plt.ylim(0, 35)
-retro_patch = mpatches.Patch(color='dimgray', label='RETROICOR + HR/RVT vs. Uncleaned')
-aroma_patch = mpatches.Patch(color='silver', label='RETROICOR + HR/RVT vs. AROMA')
-acompcor_patch = mpatches.Patch(color='whitesmoke', label='RETROICOR + HR/RVT vs. AROMA + aCompCor')
+plt.ylim(0, 60)
+retro_patch = mpatches.Patch(color='dimgray', label='RETROICOR + HR + RVT vs. Uncleaned')
+acompcor_patch = mpatches.Patch(color='whitesmoke', label='RETROICOR + HR + RVT vs. AROMA + aCompCor')
 
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)
 plt.subplots_adjust(bottom=0.23)
 plt.xticks(group_pos, group_main_effect, rotation=-45)
-plt.title('Unique RETROICOR+HR/RVT effect in % TSNR improvement', size=11, y=1.1)
-plt.legend(loc='upper left', handles=[retro_patch, aroma_patch, acompcor_patch])
+plt.title('Unique RETROICOR + HR + RVT effect in % TSNR improvement', size=11, y=1.1)
+plt.legend(loc='upper left', handles=[retro_patch, acompcor_patch])
 
 for counter, (keys, values) in enumerate(df_dic.items()):
     bars = plt.bar(x_pos[counter],
-                   height=[values.loc['Mean']['tsnr_difference_percent_hr_rvt_to_uncleaned'],
-                           values.loc['Mean']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma'],
+                   height=[values.loc['Mean']['tsnr_difference_percent_retro_hr_rvt_to_uncleaned'],
                            values.loc['Mean']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor']],
-                   yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_hr_rvt_to_uncleaned'],
-                         values.loc['Confidence Interval']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma'],
+                   yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_retro_to_uncleaned'],
                          values.loc['Confidence Interval']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor']],
                    width=bar_width,
                    capsize=5,
@@ -200,12 +163,118 @@ plt.legend(loc='upper left', handles=[retro_patch, retro_hr_rvt_patch])
 for counter, (keys, values) in enumerate(df_dic.items()):
     bars = plt.bar(x_pos[counter],
                    height=[values.loc['Mean']['tsnr_difference_percent_retro_to_uncleaned'],
-                           values.loc['Mean']['tsnr_difference_percent_hr_rvt_to_uncleaned']],
+                           values.loc['Mean']['tsnr_difference_percent_retro_hr_rvt_to_uncleaned']],
                    yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_retro_to_uncleaned'],
-                         values.loc['Confidence Interval']['tsnr_difference_percent_hr_rvt_to_uncleaned']],
+                         values.loc['Confidence Interval']['tsnr_difference_percent_retro_hr_rvt_to_uncleaned']],
                    width=bar_width,
                    capsize=5,
                    edgecolor='black',
                    color=colors)
 
     plt.savefig(BASEPATH + 'combined_retro_hr_rvt_effect.svg', dpi=1200)
+
+
+
+# Only Physio
+x_pos = [0.25,0.5,0.75,1]
+fig = plt.figure()
+colors = ['black', 'dimgray', 'silver', 'gainsboro']
+bar_width = 0.25
+group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
+plt.ylim(0, 120)
+whole_brain_patch = mpatches.Patch(color='black', label='Whole Brain')
+grey_matter_patch = mpatches.Patch(color='dimgray', label='Grey Matter')
+brainstem_patch = mpatches.Patch(color='silver', label='Brainstem')
+lc_patch = mpatches.Patch(color='gainsboro', label='Locus Coeruleus')
+
+
+plt.gca().spines['right'].set_visible(False)
+plt.gca().spines['top'].set_visible(False)
+plt.subplots_adjust(bottom=0.23)
+plt.xticks([], [])
+plt.title('RETROICOR/RVT/HR TSNR Improvement', size=11, y=1.1)
+plt.legend(loc='upper left', handles=[whole_brain_patch, grey_matter_patch, brainstem_patch, lc_patch])
+
+for counter, (keys, values) in enumerate(df_dic.items()):
+    bars = plt.bar(x_pos[counter],
+                   height=[values.loc['Mean']['tsnr_difference_percent_retro_hr_rvt_to_uncleaned']],
+                   yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_retro_hr_rvt_to_uncleaned']],
+                   width=bar_width,
+                   capsize=5,
+                   edgecolor='black',
+                   color=colors[counter])
+
+plt.ylabel('TSNR Improvement in %')
+plt.xlabel('Regions of Interest')
+plt.show()
+plt.savefig(BASEPATH + 'retro_hr_rvt_effect_seperate.png', dpi=1200)
+
+# AROMA + aCompCOr
+x_pos = [0.25,0.5,0.75,1]
+fig = plt.figure()
+colors = ['black', 'dimgray', 'silver', 'gainsboro']
+bar_width = 0.25
+group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
+plt.ylim(0, 120)
+whole_brain_patch = mpatches.Patch(color='black', label='Whole Brain')
+grey_matter_patch = mpatches.Patch(color='dimgray', label='Grey Matter')
+brainstem_patch = mpatches.Patch(color='silver', label='Brainstem')
+lc_patch = mpatches.Patch(color='gainsboro', label='Locus Coeruleus')
+
+
+plt.gca().spines['right'].set_visible(False)
+plt.gca().spines['top'].set_visible(False)
+plt.subplots_adjust(bottom=0.23)
+plt.xticks([], [])
+plt.title('ICA-AROMA + aCompCor TSNR Improvement', size=11, y=1.1)
+plt.legend(loc='upper left', handles=[whole_brain_patch, grey_matter_patch, brainstem_patch, lc_patch])
+
+for counter, (keys, values) in enumerate(df_dic.items()):
+    bars = plt.bar(x_pos[counter],
+                   height=[values.loc['Mean']['tsnr_difference_percent_aroma_acompcor_to_uncleaned']],
+                   yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_aroma_acompcor_to_uncleaned']],
+                   width=bar_width,
+                   capsize=5,
+                   edgecolor='black',
+                   color=colors[counter])
+
+plt.ylabel('TSNR Improvement in %')
+plt.xlabel('Regions of Interest')
+plt.show()
+plt.savefig(BASEPATH + 'retro_aroma_acompcor_effect_seperate.png', dpi=1200)
+
+
+# Unique
+# AROMA + aCompCOr
+x_pos = [0.25,0.5,0.75,1]
+fig = plt.figure()
+colors = ['black', 'dimgray', 'silver', 'gainsboro']
+bar_width = 0.25
+group_main_effect = ['Whole Brain', 'Grey Matter', 'Brainstem', 'LC']
+plt.ylim(0, 40)
+whole_brain_patch = mpatches.Patch(color='black', label='Whole Brain')
+grey_matter_patch = mpatches.Patch(color='dimgray', label='Grey Matter')
+brainstem_patch = mpatches.Patch(color='silver', label='Brainstem')
+lc_patch = mpatches.Patch(color='gainsboro', label='Locus Coeruleus')
+
+
+plt.gca().spines['right'].set_visible(False)
+plt.gca().spines['top'].set_visible(False)
+plt.subplots_adjust(bottom=0.23)
+plt.xticks([], [])
+plt.title('Unique RETROICOR/HR/RVT TSNR Improvement', size=11, y=1.1)
+plt.legend(loc='upper left', handles=[whole_brain_patch, grey_matter_patch, brainstem_patch, lc_patch])
+
+for counter, (keys, values) in enumerate(df_dic.items()):
+    bars = plt.bar(x_pos[counter],
+                   height=[values.loc['Mean']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor']],
+                   yerr=[values.loc['Confidence Interval']['tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor']],
+                   width=bar_width,
+                   capsize=5,
+                   edgecolor='black',
+                   color=colors[counter])
+
+plt.ylabel('TSNR Improvement in %')
+plt.xlabel('Regions of Interest')
+plt.show()
+plt.savefig(BASEPATH + 'retro_unique_retro_hr_rvt_effect_seperate.png', dpi=1200)

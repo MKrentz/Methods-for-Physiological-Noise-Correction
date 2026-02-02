@@ -16,12 +16,12 @@ import pandas as pd
 from numpy import mean, std
 from math import sqrt
 
-BASEPATH = '/project/3013068.03/physio_revision/TSNR_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/TSNR_approach/'
 
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
-part_list.remove('/project/3013068.03/physio_revision/TSNR_approach/sub-008')
-part_list = part_list[:-2]
+part_list.remove('/project/3013068.03/physio_revision_fixed/TSNR_approach/sub-008')
+part_list = part_list
 
 # Planned comparisons
 var_names_MNI = ['tsnr_difference_aroma_to_uncleaned_MNI',
@@ -44,11 +44,16 @@ var_names_MNI = ['tsnr_difference_aroma_to_uncleaned_MNI',
                  'tsnr_difference_percent_retro_to_uncleaned_MNI',
                  'tsnr_difference_percent_aroma_to_uncleaned_MNI',
                  'tsnr_difference_percent_acompcor_to_uncleaned_MNI',
-                 'tsnr_difference_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_percent_hr_to_uncleaned_MNI',
+                 'tsnr_difference_percent_rvt_to_uncleaned_MNI',
                  'tsnr_difference_percent_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_hr_rvt_to_uncleaned_MNI',
                  'tsnr_difference_retro_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_unique_retro_hr_rvt_to_aroma_MNI',
                  'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_MNI',
                  'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_vs_uncleaned_MNI',
                  'tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI',
                  'tsnr_difference_percent_aroma_acompcor_to_uncleaned_MNI']
 
@@ -72,11 +77,16 @@ var_names_native = ['tsnr_difference_aroma_to_uncleaned_native',
                     'tsnr_difference_percent_retro_to_uncleaned_native',
                     'tsnr_difference_percent_aroma_to_uncleaned_native',
                     'tsnr_difference_percent_acompcor_to_uncleaned_native',
-                    'tsnr_difference_hr_rvt_to_uncleaned_native',
+                    'tsnr_difference_percent_hr_to_uncleaned_native',
+                    'tsnr_difference_percent_rvt_to_uncleaned_native',
                     'tsnr_difference_percent_hr_rvt_to_uncleaned_native',
+                    'tsnr_difference_hr_rvt_to_uncleaned_native',
                     'tsnr_difference_retro_hr_rvt_to_uncleaned_native',
+                    'tsnr_difference_unique_retro_hr_rvt_to_aroma_native',
                     'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_native',
                     'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_native',
+                    'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_vs_uncleaned_native',
+                    'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_vs_uncleaned_native',
                     'tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native',
                     'tsnr_difference_percent_aroma_acompcor_to_uncleaned_native']
 
@@ -167,7 +177,9 @@ output_names = ['AROMA Cleaned',
                 'Percent RETROICOR and HR/RVT Cleaned'
                 'Percent RETROICOR and HR/RVT Effect vs AROMA',
                 'Percent RETROICOR and HR/RVT Effect vs AROMA and aCompCor'
-                'Percent Aroma and aCompCor to Uncleaned']
+                'Percent AROMA and aCompCor to Uncleaned',
+                'Percent HR Effect',
+                'Percent RVT Effect']
 
 results_df = pd.DataFrame(index=output_names, columns=space_name)
 
@@ -215,8 +227,13 @@ for counter, index in enumerate(results_df.columns):
         results_df.loc['Percent RETROICOR and HR/RVT', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI'], popmean=0),
                       cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI'])]
         results_df.loc['Percent Aroma and aCompCor to Uncleaned', index] = [
-            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_MNI'], popmean=0),
-            cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_MNI'])]
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_acompcor_to_uncleaned_MNI'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_aroma_acompcor_to_uncleaned_MNI'])]
+        results_df.loc['Percent HR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_hr_to_uncleaned_MNI'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_hr_to_uncleaned_MNI'])]
+        results_df.loc['Percent RVT Effect', index] = [
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_rvt_to_uncleaned_MNI'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_rvt_to_uncleaned_MNI'])]
 
     elif index == 'GrayMatter' or index == 'LC':
         results_df.loc['AROMA Cleaned', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_aroma_to_uncleaned_native'], popmean=0),
@@ -257,7 +274,14 @@ for counter, index in enumerate(results_df.columns):
             stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native'], popmean=0),
             cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_hr_rvt_to_uncleaned_native'])]
         results_df.loc['Percent Aroma and aCompCor to Uncleaned', index] = [
-            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_native'], popmean=0),
-            cohen_d_within(stats_list[counter]['tsnr_difference_percent_retro_acomcpoto_uncleaned_native'])]
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_aroma_acompcor_to_uncleaned_native'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_aroma_acompcor_to_uncleaned_native'])]
+        results_df.loc['Percent HR Effect', index] = [stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_hr_to_uncleaned_native'], popmean=0),
+                      cohen_d_within(stats_list[counter]['tsnr_difference_percent_hr_to_uncleaned_native'])]
+        results_df.loc['Percent RVT Effect', index] = [
+            stats.ttest_1samp(stats_list[counter]['tsnr_difference_percent_rvt_to_uncleaned_native'], popmean=0),
+            cohen_d_within(stats_list[counter]['tsnr_difference_percent_rvt_to_uncleaned_native'])]
+
+
 results_df.to_csv(BASEPATH + 'stats_results.txt', sep=' ')
 

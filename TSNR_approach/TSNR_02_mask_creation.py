@@ -13,11 +13,11 @@ import glob
 import numpy as np
 from nilearn import plotting
 
-BASEPATH = '/project/3013068.03/physio_revision/TSNR_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/TSNR_approach/'
 
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
-part_list = part_list[:-2]
+#part_list = part_list[-2:]
 #Mean Matrices for LC
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021',
                'sub-023', 'sub-025', 'sub-027', 'sub-029']

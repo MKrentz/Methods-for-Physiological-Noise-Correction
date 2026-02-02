@@ -11,32 +11,43 @@ import numpy as np
 import nilearn.plotting
 
 # Set general path to GLM folder
-BASEPATH = '/project/3013068.03/physio_revision/TSNR_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/TSNR_approach/'
 
 # Source all subjects within the folder
 part_list = glob.glob(BASEPATH + 'sub-*')
 part_list.sort()
-part_list = part_list[:-2]
 output_list_names = ['tsnr_difference_aroma_to_uncleaned_MNI',
-                     'tsnr_difference_retro_to_uncleaned_MNI',
-                     'tsnr_difference_acompcor_to_uncleaned_MNI',
-                     'tsnr_difference_aroma_acompcor_to_uncleaned_MNI',
-                     'tsnr_difference_aroma_retro_to_uncleaned_MNI',
-                     'tsnr_difference_unique_aroma_to_retro_MNI',
-                     'tsnr_difference_unique_retro_to_aroma_MNI',
-                     'tsnr_difference_unique_acompcor_to_aroma_MNI',
-                     'tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
-                     'tsnr_difference_percent_unique_retro_to_aroma_MNI',
-                     'tsnr_difference_percent_unique_aroma_to_retro_MNI',
-                     'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI',
-                     'tsnr_difference_percent_unique_acompcor_to_aroma_MNI',
-                     'tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI',
-                     'tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI',
-                     'tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI',
-                     'tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI',
-                     'tsnr_difference_percent_retro_to_uncleaned_MNI',
-                     'tsnr_difference_percent_aroma_to_uncleaned_MNI',
-                     'tsnr_difference_percent_acompcor_to_uncleaned_MNI']
+                 'tsnr_difference_retro_to_uncleaned_MNI',
+                 'tsnr_difference_acompcor_to_uncleaned_MNI',
+                 'tsnr_difference_aroma_acompcor_to_uncleaned_MNI',
+                 'tsnr_difference_aroma_retro_to_uncleaned_MNI',
+                 'tsnr_difference_unique_aroma_to_retro_MNI',
+                 'tsnr_difference_unique_retro_to_aroma_MNI',
+                 'tsnr_difference_unique_acompcor_to_aroma_MNI',
+                 'tsnr_difference_unique_retro_to_aroma_acompcor_MNI',
+                 'tsnr_difference_percent_unique_retro_to_aroma_MNI',
+                 'tsnr_difference_percent_unique_aroma_to_retro_MNI',
+                 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_MNI',
+                 'tsnr_difference_percent_unique_acompcor_to_aroma_MNI',
+                 'tsnr_difference_percent_unique_retro_to_aroma_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_unique_aroma_to_retro_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_unique_acompcor_to_aroma_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_unique_retro_to_aroma_acompcor_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_retro_to_uncleaned_MNI',
+                 'tsnr_difference_percent_aroma_to_uncleaned_MNI',
+                 'tsnr_difference_percent_acompcor_to_uncleaned_MNI',
+                 'tsnr_difference_percent_hr_to_uncleaned_MNI',
+                 'tsnr_difference_percent_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_percent_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_retro_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_unique_retro_hr_rvt_to_aroma_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_unique_retro_hr_rvt_to_aroma_acompcor_vs_uncleaned_MNI',
+                 'tsnr_difference_percent_retro_hr_rvt_to_uncleaned_MNI',
+                 'tsnr_difference_percent_aroma_acompcor_to_uncleaned_MNI']
 
 overall_results = pd.DataFrame(index=[sub_id[-7:] for sub_id in part_list], columns=output_list_names)
 
@@ -54,9 +65,9 @@ for glms in output_list_names:
     nib.save(nib.Nifti2Image(temp_mean,
                              affine=nib.load(subjects).affine,
                              header=nib.load(subjects).header),
-             '/project/3013068.03/physio_revision/TSNR_approach/mean_TSNR/' + glms[:-4] + '.nii.gz')
+             '/project/3013068.03/physio_revision_fixed/TSNR_approach/mean_TSNR/' + glms[:-4] + '.nii.gz')
 
-mean_list = glob.glob(BASEPATH + 'mean_TSNR/*')
+mean_list = glob.glob(BASEPATH + 'mean_TSNR/*.nii.gz')
 cut_coords_values = [-60, -45, -30, -15, 0, 15, 30, 45, 60]
 for mean_counter, mean_name in enumerate(mean_list):
     if output_list_names[mean_counter] == 'tsnr_difference_percent_aroma_to_uncleaned_MNI':
@@ -69,6 +80,7 @@ for mean_counter, mean_name in enumerate(mean_list):
                                   cut_coords=cut_coords_values,
                                   vmin=0,
                                   vmax=150,
+                                  cbar_tick_format="%i",
                                   output_file=BASEPATH + 'mean_TSNR/' + output_list_names[mean_counter])
     else:
         nilearn.plotting.plot_img(nib.load(mean_name), 
@@ -79,4 +91,5 @@ for mean_counter, mean_name in enumerate(mean_list):
                                   cmap='hot',
                                   cut_coords=cut_coords_values,
                                   vmin=0,
+                                  cbar_tick_format="%i",
                                   output_file=BASEPATH + 'mean_TSNR/' + output_list_names[mean_counter])
