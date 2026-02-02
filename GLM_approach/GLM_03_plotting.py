@@ -12,7 +12,7 @@ from nilearn import plotting
 import matplotlib.pyplot as plt
 
 # Set general path to GLM folder
-BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/GLM_approach/'
 
 # Source all subjects within the folder
 part_list = glob.glob(BASEPATH + 'sub-*')
@@ -23,7 +23,7 @@ for subs in part_list:
     # Create a glassbrain-graph per subject for each GLM contrast in each of the 6GLMs
     try:
         sub_id = subs[-7:]
-        sub_path = f'/project/3013068.03/physio_revision/GLM_approach/{sub_id}/glm_output/'
+        sub_path = f'/project/3013068.03/physio_revision_fixed/GLM_approach/{sub_id}/glm_output/'
         zmaps_total = glob.glob(sub_path + 'glm*/*z_score*.nii.gz')
         
         for zmap_counter, subject_zmap in enumerate(zmaps_total):
@@ -44,25 +44,17 @@ for subs in part_list:
 
 # Create a list of all GLM contrasts across subjects
 approaches_fdr = []
-approaches_fwe = []
 for subs in part_list:
     sub_id = subs[-7:]
-    sub_path = f'/project/3013068.03/physio_revision/GLM_approach/{sub_id}/glm_output/'
+    sub_path = f'/project/3013068.03/physio_revision_fixed/GLM_approach/{sub_id}/glm_output/'
     zmaps_fdr = glob.glob(sub_path + '*/*z_score*fdr_corrected.nii.gz')
-    zmaps_fwe = glob.glob(sub_path + '*/*z_score*fwe_corrected.nii.gz')
+    zmaps_fdr.sort()
     if approaches_fdr == []:
-        for count,x in enumerate(zmaps_fdr):
+        for count, x in enumerate(zmaps_fdr):
                 approaches_fdr.append([x])
     else:
-        for count,x in enumerate(zmaps_fdr):
+        for count, x in enumerate(zmaps_fdr):
             approaches_fdr[count].append(x)
-    if approaches_fwe == []:
-        for count,x in enumerate(zmaps_fwe):
-                approaches_fwe.append([x])
-    else:
-        for count,x in enumerate(zmaps_fwe):
-            approaches_fwe[count].append(x)
-        
 
 # Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM\
 
@@ -82,22 +74,5 @@ for approach_counter, approach in enumerate(approaches_fdr):
                                   vmin=0,
                                   plot_abs=True)
     plt.savefig(BASEPATH + 'fdr_plot/' + approaches_fdr[approach_counter][0][approaches_fdr[approach_counter][0].
-                rfind('glm'):-7].replace('/', '_') + '.png')
-    plt.close()
-
-# Create a contrast glassbrain collection across subjects for each GLM contrast in each GLM
-for approach_counter, approach in enumerate(approaches_fwe):
-    fig, axes = plt.subplots(nrows=9, ncols=3, figsize=[15, 25])
-    for cidx, zmap in enumerate(approach): 
-        subject_id = zmap[zmap.find('sub-'):zmap.find('sub-') + 7]
-        print(subject_id)
-        plotting.plot_glass_brain(zmap,
-                                  colorbar=True,
-                                  threshold=None,
-                                  title=subject_id,
-                                  axes=axes[int(cidx / 3), int(cidx % 3)],
-                                  annotate=False,
-                                  plot_abs=False)
-    plt.savefig(BASEPATH + 'fwe_plot/' + approaches_fwe[approach_counter][0][approaches_fwe[approach_counter][0].
                 rfind('glm'):-7].replace('/', '_') + '.png')
     plt.close()

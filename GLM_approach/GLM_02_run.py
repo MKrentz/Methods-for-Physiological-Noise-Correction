@@ -19,19 +19,16 @@ print(sys.argv[1])
 sub_id = sys.argv[1]
 
 BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
-"""part_list = glob.glob(BASEPATH + 'sub-*')
-part_list.sort() 
-part_list = [part_list[0]]
-"""
+
 # Indicating subject having the 'stress' condition during their FIRsT functional session
 stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015',
                'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
 cor_ls = ['fdr', 'bonferroni']
 
 # Invoke subject_Class to allow access to all necessary data
-glm_path = '/project/3013068.03/physio_revision/GLM_approach/{0}/glm_output/'.format(sub_id)
+glm_path = '/project/3013068.03/physio_revision_fixed/GLM_approach/{0}/glm_output/'.format(sub_id)
 sub = Subject(sub_id)
-
+print(sub.retroicor_regressors)
 # Account for balancing in stress/control session order
 ses_nr = 2 if sub_id in stress_list else 1
 
@@ -48,7 +45,8 @@ mni_mask = sub.get_brainmask(MNI=True, session=ses_nr, run=2)
 melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02,
                                               slice_time_ref=None,
                                               smoothing_fwhm=6,
-                                              drift_model=None,
+                                              drift_model='cosine',
+                                              high_pass=0.008,
                                               hrf_model=None,
                                               mask_img=mni_mask,
                                               verbose=1)
@@ -144,10 +142,10 @@ glm3_report = glm_output.generate_report(contrasts=[F_contrast_acompcor],
 glm3_report.save_as_html(f'{glm_path}/{sub_id}_report_glm3.html')
 
 for output_type in F_contrast_acompcor_output.keys():
-    F_contrast_aroma_output[output_type].to_filename(glm_path + f'glm3_acompcor/acompcor_{output_type}.nii.gz')
+    F_contrast_acompcor_output[output_type].to_filename(glm_path + f'glm3_acompcor/acompcor_{output_type}.nii.gz')
 
 for correction in cor_ls:
-    thresholded_contrast = threshold_stats_img(F_contrast_aroma_output['z_score'],
+    thresholded_contrast = threshold_stats_img(F_contrast_acompcor_output['z_score'],
                                                alpha=.05,
                                                height_control=correction)
     nib.save(thresholded_contrast[0], glm_path + f'glm3_acompcor/acompcor_z_score_{correction}_corrected.nii.gz')
@@ -336,3 +334,55 @@ for contrast in glm7_contrast_dic.keys():
         nib.save(thresholded_contrast[0],
                  glm_path + f'glm7_retro_addition_aroma_acompcor/{contrast}_z_score_{correction}_corrected.nii.gz')
 
+
+# GLM HR
+
+design_glm8 = full_physio[full_physio.columns[-5:-2]]
+hr_contrast_length = np.shape(full_physio[full_physio.columns[-5:-3]])[1]
+design_glm8['constant'] = constant
+design_glm8.index = frame_times
+glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm8)
+contrast_matrix = np.eye(design_glm8.shape[1])
+F_contrast_hr = contrast_matrix[:hr_contrast_length]
+F_contrast_hr_output = glm_output.compute_contrast([F_contrast_hr],
+                                                         stat_type='F',
+                                                         output_type='all')
+glm8_report = glm_output.generate_report(contrasts=[F_contrast_hr],
+                                         title=f'{sub_id} GLM8',
+                                         plot_type='glass')
+glm8_report.save_as_html(f'{glm_path}/{sub_id}_report_glm8.html')
+
+for output_type in F_contrast_hr_output.keys():
+    F_contrast_hr_output[output_type].to_filename(glm_path + f'glm8_hr/hr_{output_type}.nii.gz')
+
+for correction in cor_ls:
+    thresholded_contrast = threshold_stats_img(F_contrast_hr_output['z_score'],
+                                               alpha=.05,
+                                               height_control=correction)
+    nib.save(thresholded_contrast[0], glm_path + f'glm8_hr/hr_z_score_{correction}_corrected.nii.gz')
+
+# GLM RVT
+
+design_glm9 = full_physio[full_physio.columns[-2:]]
+rvt_contrast_length = np.shape(full_physio[full_physio.columns[-2:]])[1]
+design_glm9['constant'] = constant
+design_glm9.index = frame_times
+glm_output = melodic_GLM.fit(func_data, design_matrices=design_glm9)
+contrast_matrix = np.eye(design_glm9.shape[1])
+F_contrast_rvt = contrast_matrix[:rvt_contrast_length]
+F_contrast_rvt_output = glm_output.compute_contrast([F_contrast_rvt],
+                                                   stat_type='F',
+                                                   output_type='all')
+glm9_report = glm_output.generate_report(contrasts=[F_contrast_rvt],
+                                         title=f'{sub_id} GLM8',
+                                         plot_type='glass')
+glm9_report.save_as_html(f'{glm_path}/{sub_id}_report_glm9.html')
+
+for output_type in F_contrast_rvt_output.keys():
+    F_contrast_rvt_output[output_type].to_filename(glm_path + f'glm9_rvt/rvt_{output_type}.nii.gz')
+
+for correction in cor_ls:
+    thresholded_contrast = threshold_stats_img(F_contrast_rvt_output['z_score'],
+                                               alpha=.05,
+                                               height_control=correction)
+    nib.save(thresholded_contrast[0], glm_path + f'glm9_rvt/rvt_z_score_{correction}_corrected.nii.gz')

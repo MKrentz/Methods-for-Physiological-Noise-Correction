@@ -16,7 +16,7 @@ from nilearn.glm import threshold_stats_img
 import matplotlib.pyplot as plt
 import sys
 
-BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/GLM_approach/'
 
 # Pools all available summary files
 
@@ -67,13 +67,13 @@ frame_times = np.arange(n_scans) * t_r
 mni_mask = sub.get_brainmask(MNI=True, session=ses_nr, run=2)
 
 # GLM settings
-melodic_GLM = glm.first_level.FirstLevelModel(t_r = 2.02,
-                                              slice_time_ref = 0,
-                                              smoothing_fwhm = 6,
-                                              drift_model = None,
-                                              hrf_model = None,
-                                              mask_img = mni_mask,
-                                              verbose = 1)
+melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02,
+                                              slice_time_ref=None,
+                                              smoothing_fwhm=6,
+                                              drift_model=None,
+                                              hrf_model=None,
+                                              mask_img=mni_mask,
+                                              verbose=1)
 
 
 # Loading respective functional run as NII-img-like nibabel object
@@ -102,6 +102,7 @@ columns_AROMA = ['AR_' + x[-2:] for x in aroma_noise]
 # Column name constant
 column_constant = ['Constant']
 
+"""
 # Account for subject without potential misclassification
 if potential_misclass_matrix:
     for component_id, component in enumerate(potential_misclass_matrix):
@@ -145,12 +146,12 @@ if potential_misclass_matrix:
              'melodic_misclassifications/{1}_fwe_corrected.nii.gz'.format(sub_id,
                                                                                                        'AddComp_' + str(potential_misclass_id[component_id]+1)))
         # Thresholded maps FDR
-        thresholded_RETRO_FWE, threshold_RETRO_FWE = threshold_stats_img(F_RETRO_unique_added_comp_output,
+        thresholded_RETRO_FDR, threshold_RETRO_FDR = threshold_stats_img(F_RETRO_unique_added_comp_output,
                                                                          alpha=.05,
                                                                          height_control='fdr')
 
         # Save resulting z-maps FDR-thresholded 0.05
-        nib.save(thresholded_RETRO_FWE, BASEPATH + '{0}/'\
+        nib.save(thresholded_RETRO_FDR, BASEPATH + '{0}/'\
              'melodic_misclassifications/{1}_fdr_corrected.nii.gz'.format(sub_id,
                                                                                                        'AddComp_' + str(potential_misclass_id[component_id]+1)))
 
@@ -160,7 +161,34 @@ if potential_misclass_matrix:
                                   threshold=None,
                                   title=sub_id + 'AddComp: ' + str(potential_misclass_id[component_id] + 1),
                                   output_file=BASEPATH + '{0}/'\
-                                  'melodic_misclassifications//{1}_fwe_corrected.png'\
+                                  'melodic_misclassifications/{1}_fwe_corrected.png'\
                                   .format(sub_id, 'AddComp_' + str(potential_misclass_id[component_id] + 1)),
                                   plot_abs=False)
         plt.close()
+"""
+if potential_misclass_matrix:
+    # Combine all components into single matrix
+    all_components = pd.concat(potential_misclass_matrix, axis=1)
+    component_names = [f'AddComp_{id + 1}' for id in potential_misclass_id]
+
+    # Create unified design matrix
+    design = pd.concat([all_components, retro_noise, aroma_noise], axis=1)
+    design['Constant'] = constant
+    design.columns = component_names + columns_RETRO + columns_AROMA + column_constant
+
+    # Create GLM with full design matrix
+    design.index = frame_times
+    glm_output = melodic_GLM.fit(func_data, design_matrices=design)
+
+    # Create contrast matrix for RETROICOR (accounts for all added components)
+    n_added = len(component_names)
+    contrast_matrix = np.eye(design.shape[1])
+    F_RETRO_contrast = contrast_matrix[n_added:n_added + len(columns_RETRO)]
+
+    # Compute F-test for RETROICOR variance
+    F_test = glm_output.compute_contrast(F_RETRO_contrast, stat_type='F')
+
+    # Save and threshold results (existing code adapted)
+    nib.save(F_test, f'{BASEPATH}{sub_id}/full_model_RETROICOR_F.nii.gz')
+    thresholded_FWE, _ = threshold_stats_img(F_test, alpha=.05, height_control='bonferroni')
+    nib.save(thresholded_FWE, f'{BASEPATH}{sub_id}/full_model_RETROICOR_FWE.nii.gz')

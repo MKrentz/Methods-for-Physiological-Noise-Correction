@@ -21,7 +21,7 @@ from nilearn.datasets import load_mni152_brain_mask
 print(sys.argv[1])
 sub_id = sys.argv[1]
 
-BASEPATH = '/project/3013068.03/physio_revision/GLM_approach/'
+BASEPATH = '/project/3013068.03/physio_revision_fixed/GLM_approach/'
 FMRIPREP_PATH = "/project/3013068.03/fmriprep_test/"
 
 # List of all pre-thresholded z-maps (FWE/p<.05) displaying unique RETROICOR variance with AROMA in the model.
@@ -68,7 +68,7 @@ mni_mask = sub.get_brainmask(session=ses_nr, run=2, task='RS', MNI=True)
 
 # Create GLM with 6mm smoothing and no convolution
 melodic_GLM = glm.first_level.FirstLevelModel(t_r=2.02,
-                                              slice_time_ref=0,
+                                              slice_time_ref=False,
                                               high_pass=0,
                                               smoothing_fwhm=6,
                                               drift_model=None,
