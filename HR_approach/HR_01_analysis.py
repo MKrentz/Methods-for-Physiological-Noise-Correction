@@ -1,16 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Created on Thu Aug 12 10:00:00 2021
-
-This script implements the calculation of removed datapoints during cleaning of heart rate data.
-The implementation here IS convoluted, as a consequence of HERA (the program used for data cleaning) allowing for overlapping
-windows of rejection, leading to otherwise faulty caluations.
-
-Output:
-    A dataframe showing percentage of rejection per subject as well as presence of potential rejection overlap (which is considered during calculation)
-
-@author: MKrentz
+This script calculates the total duration of heart rate data points removed 
+during the cleaning process in HERA. It specifically addresses the issue of 
+overlapping rejection windows to ensure the final percentage is accurate.
 """
 
 from scipy import io
@@ -19,104 +11,108 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Define paths for the specific cluster environment
 BASEPATH = '/project/3013068.03/RETROICOR/TSNR/'
 SAVEPATH = '/project/3013068.03/RETROICOR/HR_approach/'
-# Load all available participants
-part_list = glob.glob(BASEPATH + 'sub-*')
-part_list.sort()
 
-subs = []
-for participants in part_list:
-    subs.append(participants[-7:])
+# Generate subject list from the existing directory structure
+part_dirs = sorted(glob.glob(BASEPATH + 'sub-*'))
+subs = [p[-7:] for p in part_dirs]
 
-# Indicating subject having the 'stress' condition during their FIRST functional session
-stress_list = ['sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029']
+# Counterbalancing list: subjects who had the 'stress' condition in their first session
+stress_first_list = [
+    'sub-002', 'sub-003', 'sub-004', 'sub-007', 'sub-009', 'sub-013', 
+    'sub-015', 'sub-017', 'sub-021', 'sub-023', 'sub-025', 'sub-027', 'sub-029'
+]
 
-# Create DataFrame to be filled
+# Prepare results container
 rejection_df = pd.DataFrame(index=subs, columns=['HR Rejection Percentage', 'Session Number', 'Overlap'])
 
-# Subject loop
-for subject_long in part_list:
+for subject_dir in part_dirs:
+    sub_id = subject_dir[-7:]
+    
+    # Identify the correct session number based on condition balancing
+    # Stress session is 3 for the 'stress_first' group, otherwise session 2
+    session_nr = 3 if sub_id in stress_first_list else 2
 
-    # Subject space_identifier
-    sub_id = subject_long[-7:]
-
-    # Account for balancing in stress/control session order
-    ses_nr = 3 if sub_id in stress_list else 2
-
-    # Account for different naming conventions in HR data
+    # HERA output naming can vary; we attempt both known patterns
     try:
-        hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/sub_{2}_0{1}*run_4*hera.mat'.format(sub_id, str(ses_nr), sub_id[-3:]))[0])
-    except:
-        hera = io.loadmat(glob.glob('/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/{0}*ses-0{1}*RS*run-2*hera.mat'.format(sub_id, str(ses_nr)))[0])
+        pattern1 = '/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/sub_{2}_0{1}*run_4*hera.mat'.format(sub_id, str(session_nr), sub_id[-3:])
+        hera_file = glob.glob(pattern1)[0]
+        hera = io.loadmat(hera_file)
+    except IndexError:
+        # Fallback to alternative naming convention (e.g., run-2)
+        pattern2 = '/project/3013068.03/stats/HR_processing/{0}/ses-0{1}/{0}*ses-0{1}*RS*run-2*hera.mat'.format(sub_id, str(session_nr))
+        hera_file = glob.glob(pattern2)[0]
+        hera = io.loadmat(hera_file)
 
-    hera_data = hera['matfile']
+    # Access the MATLAB data structure
+    hera_mat = hera['matfile']
+    
+    # Extract the timing pairs for rejected segments
+    # The structure follows: [7] for rejection windows, [0] for the data array
+    raw_intervals = []
+    for entry in hera_mat[0][0][7][0]:
+        start_time, end_time = entry[0][0], entry[0][1]
+        if end_time > start_time:
+            raw_intervals.append([start_time, end_time])
 
-    rejections = []
-    overlap = 'No'
+    # Algorithm to merge overlapping intervals to prevent double-counting
+    rejection_seconds = 0
+    overlap_detected = 'No'
+    
+    if raw_intervals:
+        # Sort intervals by start time for the merging algorithm
+        raw_intervals.sort(key=lambda x: x[0])
+        merged_intervals = [raw_intervals[0]]
+        
+        for current in raw_intervals[1:]:
+            prev_start, prev_end = merged_intervals[-1]
+            curr_start, curr_end = current
+            
+            if curr_start < prev_end:
+                # If current start is before previous end, windows overlap
+                overlap_detected = 'Yes'
+                # Update the previous end time to the maximum of both
+                merged_intervals[-1][1] = max(prev_end, curr_end)
+            else:
+                merged_intervals.append(current)
+        
+        rejection_seconds = sum(m[1] - m[0] for m in merged_intervals)
 
-    #Loop over all rejection windows to calculate seconds rejected
-    for counter, object in enumerate(hera_data[0][0][7][0]):
+    # Total session length is derived from the final R-peak timestamp
+    total_duration = float(hera_mat[0][0][4][0][-1:])
+    perc_rejected = (rejection_seconds / total_duration) * 100
 
-        # Identifier whether a rejection window overlap exists
-        overlap_object = False
+    # Fill the dataframe using .at for efficient scalar assignment
+    rejection_df.at[sub_id, 'HR Rejection Percentage'] = perc_rejected
+    rejection_df.at[sub_id, 'Session Number'] = session_nr
+    rejection_df.at[sub_id, 'Overlap'] = overlap_detected
 
-        # This loop accounts for rejection overlaps
-        for timing_pairs in hera_data[0][0][7][0]:
-            if timing_pairs[0][0] < object[0][1] and timing_pairs[0][1] > object[0][1]:
-                overlap = 'Yes'
-                overlap_object = True
-                break
+# Save the final table
+rejection_df.to_csv(SAVEPATH + 'HR_rejections.tsv', sep='\t')
 
-        # Depending on overlap the values are adjusted
-        if overlap_object == True:
-            overlap_calc = timing_pairs[0][0] - object[0][0]
-            if overlap_calc < 0:
-                continue
-            rejections.append(overlap_calc)
+# Visualization of rejection distribution
+fig, ax = plt.subplots(figsize=(5, 7))
+# Ensure data is numeric for plotting
+numeric_data = pd.to_numeric(rejection_df['HR Rejection Percentage'])
 
-        elif overlap_object == False:
-            overlap_calc = object[0][1] - object[0][0]
-            if overlap_calc < 0:
-                continue
-            rejections.append(overlap_calc)
+# Generate boxplot and identify outliers (fliers)
+bp = ax.boxplot(numeric_data, widths=0.4, patch_artist=True,
+                boxprops=dict(facecolor='#d1e5f0', color='#000000'))
 
-    # Taking the last peak timestamp to substract from and calculate percentage
-    last_peak = float(hera_data[0][0][4][0][-1:])
-    rejection_duration = np.sum(rejections)
-    percentage_rejection = rejection_duration / last_peak * 100
+# Label outliers with subject ID for quality control review
+outlier_values = bp['fliers'][0].get_ydata()
+for val in outlier_values:
+    # Retrieve the subject ID associated with the outlier value
+    subj_name = rejection_df[rejection_df['HR Rejection Percentage'] == val].index[0]
+    ax.text(1.1, val, f'{subj_name} ({val:.1f}%)', va='center', color='red', fontsize=9)
 
-    #Create DataFrame and save
-    rejection_df['HR Rejection Percentage'][sub_id] = percentage_rejection
-    rejection_df['Session Number'][sub_id] = ses_nr
-    rejection_df['Overlap'][sub_id] = overlap
-    rejection_df.to_csv(SAVEPATH + 'HR_rejections.txt')
-
-#plt.xlim((0, 1))
-
-fig, ax = plt.subplots()
-bp = ax.boxplot(rejection_df['HR Rejection Percentage'], widths=0.5)
-fly = bp['fliers'][0]
-names = []
-for flies in fly.get_data():
-    fly_data = flies
-
-for counter, data in rejection_df.iterrows():
-    if data['HR Rejection Percentage'] in fly_data:
-        names.append(data.name)
-
-for counter, flier in enumerate(fly.get_ydata()):
-    ax.text(1.05,
-            flier,
-            names[counter] + ': {}%'.format(np.round(flier, 2)),
-            va = 'center')
-
-plt.xticks([], rotation=-45)
+# Plot aesthetics
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.set_ylabel('Data Rejected (%)', fontsize=10)
+ax.set_title('Heart Rate Cleaning: Percentage Rejected', fontsize=12, pad=15)
+plt.xticks([])
 plt.tight_layout()
-plt.gca().spines['right'].set_visible(False)
-plt.gca().spines['top'].set_visible(False)
-plt.title('Heartrate Rejections', size = 11, y = 1.1)
-plt.ylabel('Percentage Rejection')
-plt.ylim(0, 50)
-fig.subplots_adjust(left=0.1)
-plt.savefig(SAVEPATH + 'HR_rejections.png')
+plt.savefig(SAVEPATH + 'HR_rejections_boxplot.png', dpi=300)
